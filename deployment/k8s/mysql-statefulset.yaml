@@ -1,0 +1,121 @@
+# =====================================================================
+# fatjar K8s 部署 - MySQL StatefulSet（教学用单实例）
+# 说明：实际生产环境 MySQL 应使用云数据库 RDS 或 MySQL Operator 高可用集群
+#       这里仅用于演示 StatefulSet + PVC 持久化部署
+# 包含：Headless Service（用于 Pod DNS）+ StatefulSet + volumeClaimTemplates
+# 应用方式：kubectl apply -f mysql-statefulset.yaml -n fatjar
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. Headless Service：为 StatefulSet 提供稳定 Pod DNS（mysql-0.mysql）
+# clusterIP: None 表示 Headless，DNS 直接解析到 Pod IP
+# ---------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+spec:
+  clusterIP: None         # Headless 模式，DNS 解析到 Pod IP
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+# ---------------------------------------------------------------------
+# 2. StatefulSet：MySQL 单实例部署
+# StatefulSet 适用于有状态应用，提供稳定网络标识 + 持久化存储
+# ---------------------------------------------------------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+spec:
+  # 服务名：关联上面的 Headless Service
+  serviceName: mysql
+  # 单实例教学用（生产应配置主从复制）
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          # 环境变量：MySQL root 密码、默认库名
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fatjar-secret
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_DATABASE
+              value: "fatjar"
+            - name: TZ
+              value: "Asia/Shanghai"
+          # 启动参数：字符集 utf8mb4、不区分大小写
+          args:
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+            - --default-authentication-plugin=mysql_native_password
+            - --lower_case_table_names=1
+          # 数据卷挂载：MySQL 数据目录
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          # 资源限制
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          # 存活探针：mysqladmin ping
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # 就绪探针：能执行 SQL 才视为就绪
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysql -h localhost -uroot -p$MYSQL_ROOT_PASSWORD -e 'SELECT 1'"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+  # -----------------------------------------------------------------
+  # volumeClaimTemplates：StatefulSet 特性，为每个 Pod 自动创建独立 PVC
+  # 模板中声明的存储类（storageClassName）需集群已存在
+  # accessModes: ReadWriteOnce 表示只能被单个节点读写
+  # -----------------------------------------------------------------
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        # 存储类名：集群需存在，如不指定则用默认 StorageClass
+        # 阿里云可用 alicloud-disk-essd，本地集群可用 standard
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi     # 存储 10GB（按需调整）

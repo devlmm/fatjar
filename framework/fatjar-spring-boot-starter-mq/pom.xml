@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-mq : RocketMQ 封装
+  ====================================================================================
+  职责：装配 MqConfig（仅在配置 rocketmq.name-server 时激活），并提供 DemoMqProducer 生产者示例。
+  依赖：rocketmq-spring-boot-starter(2.3.6) + fatjar-common
+  说明：RocketMQTemplate 由 rocketmq-spring-boot-starter 自动装配，本 Starter 不重复。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-mq</artifactId>
+    <name>fatjar-spring-boot-starter-mq</name>
+    <description>RocketMQ 封装 - 生产者示例与消息序列化装配</description>
+
+    <dependencies>
+        <!-- RocketMQ Spring Boot Starter（自动装配 RocketMQTemplate） -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- 自研通用模块 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

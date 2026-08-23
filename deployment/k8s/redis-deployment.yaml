@@ -1,0 +1,108 @@
+# =====================================================================
+# fatjar K8s 部署 - Redis Deployment
+# 作用：Redis 缓存服务部署（单实例教学用）
+# 生产环境应使用 Redis Cluster 或云数据库 Redis（如阿里云 Tair/RDS Redis）
+# 应用方式：kubectl apply -f redis-deployment.yaml -n fatjar
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. Service：为 Redis 提供集群内服务发现入口
+# ClusterIP 类型，集群内通过 redis:6379 访问
+# ---------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+---
+# ---------------------------------------------------------------------
+# 2. Deployment：Redis 单实例部署
+# 使用 redis:7-alpine 镜像（轻量，适合容器化）
+# ---------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379
+          # 启动命令：开启 AOF 持久化，密码从 Secret 注入
+          # 注意：requirepass 后接密码，密码可能含特殊字符需引号转义
+          command:
+            - "redis-server"
+            - "--appendonly"
+            - "yes"
+          args:
+            - "--requirepass"
+            - "$(REDIS_PASSWORD)"
+          # 环境变量：Redis 密码从 Secret 注入
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fatjar-secret
+                  key: REDIS_PASSWORD
+          # 数据卷挂载：AOF/RDB 持久化
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          # 资源限制
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # 存活探针：redis-cli ping
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -a $REDIS_PASSWORD ping | grep PONG"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+          # 就绪探针：同上
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli -a $REDIS_PASSWORD ping | grep PONG"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          # 安全上下文：非 root 运行（redis 镜像默认 UID=999）
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+      # 数据卷：使用 emptyDir（Pod 销毁后丢失，生产应换 PVC）
+      volumes:
+        - name: redis-data
+          emptyDir: {}

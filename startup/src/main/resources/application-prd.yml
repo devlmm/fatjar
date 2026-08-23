@@ -1,0 +1,40 @@
+# ====================================================================================
+# application-prd.yml - PRD 环境配置（阿里云生产环境）
+# ------------------------------------------------------------------------------------
+# 生产环境以 Nacos 为准，此处仅占位与覆盖日志级别（PRD 日志 WARN，减少日志量）。
+# 优先级：Nacos > application-prd.yml > application.yml
+# ====================================================================================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:mysql-prd}:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: ${REDIS_HOST:redis-prd}
+      port: 6379
+
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESERVER:rocketmq-prd:9876}
+
+xxl:
+  job:
+    enabled: true
+    admin:
+      addresses: http://xxl-job-admin-prd:8085/xxl-job-admin
+    executor:
+      appname: fatjar-executor-prd
+      port: 9999
+
+# 日志级别：PRD 收敛到 WARN（生产环境减少日志量）
+logging:
+  level:
+    root: WARN
+    com.workspace.fatjar: INFO
+
+# PRD 关闭 Knife4j 文档（安全考虑）
+fatjar:
+  web:
+    enable-knife4j: false

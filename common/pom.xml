@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-common : 通用工具集合
+  ====================================================================================
+  内容：异常体系 / 业务枚举 / 统一返回 R / 分页结果 PageResult /
+        雪花 ID 生成器 / 状态机 / 用户上下文 UserContext / BaseEntity
+  依赖：仅 Spring Boot 基础 + Lombok + Hutool + Guava + MyBatis-Plus 注解（BaseEntity 用 @TableId）
+  被所有 api/impl 模块依赖，必须保持轻量、零业务侵入。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-common</artifactId>
+    <name>fatjar-common</name>
+    <description>通用工具集合 - 异常/枚举/返回/雪花ID/状态机/UserContext/BaseEntity</description>
+
+    <dependencies>
+        <!-- Spring Boot 基础（Web + 校验 + AOP + 配置） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- MyBatis-Plus 注解（BaseEntity 用 @TableId/@TableField，不引入完整 starter） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-extension</artifactId>
+        </dependency>
+
+        <!-- Hutool + Guava 工具库 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <!-- Lombok：common 内部大量使用 @Data/@Getter/@Builder，必须显式声明（provided 不传递） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

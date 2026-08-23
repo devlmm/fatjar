@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-auth-parent : 权限模块聚合器（aggregator）
+  ====================================================================================
+  职责：
+    1. 聚合 auth 模块的 api（门面契约）与 auth（业务本名实现）
+    2. 不直接依赖任何技术 starter，仅做模块组织
+  嵌套结构（门面 Facade + 业务本名实现）：
+    backend/auth/                  aggregator pom (artifactId=fatjar-auth-parent)
+      ├── api/                     fatjar-auth-api：门面契约（api/AuthApi + ro/LoginRO + dto/*）
+      └── auth/                    fatjar-auth（业务本名，无 -impl 后缀）：entity/mapper/service/controller
+  跨模块依赖规则：业务实现模块之间通过 api 契约互相依赖，永不直接依赖对方实现，
+                  从根源规避 Maven 循环依赖。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承业务父 POM（fatjar-backend），获取 Lombok(provided) 统一声明与 BOM 版本锁定 -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-backend</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-auth-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>fatjar-auth-parent</name>
+    <description>权限模块聚合器 - 聚合 api 门面与 auth 业务实现</description>
+
+    <!-- 聚合子模块：先 api 后 auth（实现依赖契约） -->
+    <modules>
+        <module>api</module>
+        <module>auth</module>
+    </modules>
+</project>

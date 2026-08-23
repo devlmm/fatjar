@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-security : Spring Security 基础封装
+  ====================================================================================
+  职责：仅注册 PasswordEncoder（BCryptPasswordEncoder），不配置 SecurityFilterChain。
+        SecurityFilterChain 由业务 auth 模块按需配置，避免 Bean 重复与冲突。
+  依赖：spring-boot-starter-security + jjwt(api/impl/jackson) + fatjar-common
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-security</artifactId>
+    <name>fatjar-spring-boot-starter-security</name>
+    <description>Spring Security 基础封装 - 仅注册 PasswordEncoder，不配置 SecurityFilterChain</description>
+
+    <dependencies>
+        <!-- Spring Security 启动器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- JWT（jjwt）：api 编译期，impl/jackson 运行期 -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 自研通用模块 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

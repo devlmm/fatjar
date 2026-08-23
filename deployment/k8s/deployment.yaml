@@ -1,0 +1,125 @@
+# =====================================================================
+# fatjar K8s 部署 - 应用 Deployment
+# 作用：声明 fatjar-app Pod 副本数量、镜像、端口、探针、资源、环境变量
+# 副本数：2（教学用，生产环境按需扩展）
+# 镜像：fatjar-startup:1.0.0
+# 暴露端口：8080（业务）、8081（Actuator）、9999（XXL-JOB 执行器）
+# 探针：HTTP /actuator/health on 8081（管理端口）
+# 应用方式：kubectl apply -f deployment.yaml -n fatjar
+# =====================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fatjar-app
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: fatjar
+    app.kubernetes.io/component: app
+spec:
+  # 副本数：2 个 Pod 副本，提供基本高可用
+  replicas: 2
+  # 滚动更新策略：最大超出 1 个、最大不可用 0 个
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  # 选择器：匹配标签 app=fatjar-app 的 Pod
+  selector:
+    matchLabels:
+      app: fatjar-app
+  # Pod 模板
+  template:
+    metadata:
+      labels:
+        app: fatjar-app
+        app.kubernetes.io/name: fatjar
+    spec:
+      # -----------------------------------------------------------------
+      # 容器定义
+      # -----------------------------------------------------------------
+      containers:
+        - name: fatjar-app
+          # 业务镜像名（先 build 推到 registry，按需修改 registry 地址）
+          image: fatjar-startup:1.0.0
+          # 镜像拉取策略：本地优先，避免每次重启都拉
+          imagePullPolicy: IfNotPresent
+          # 容器暴露端口声明（仅文档作用，实际由 Service 暴露）
+          ports:
+            - name: http-business  # 业务端口 8080
+              containerPort: 8080
+              protocol: TCP
+            - name: http-actuator  # Actuator 管理端口 8081
+              containerPort: 8081
+              protocol: TCP
+            - name: xxl-job-exec   # XXL-JOB 执行器端口 9999
+              containerPort: 9999
+              protocol: TCP
+          # -------------------------------------------------------------
+          # 环境变量：从 ConfigMap 和 Secret 批量注入
+          # envFrom 让容器直接引用 ConfigMap/Secret 的所有键值对
+          # -------------------------------------------------------------
+          envFrom:
+            - configMapRef:
+                name: fatjar-config
+            - secretRef:
+                name: fatjar-secret
+          # -------------------------------------------------------------
+          # 资源限制：requests 为调度下限，limits 为上限
+          # 教学配置：256Mi-512Mi 内存、250m-500m CPU
+          # 生产环境根据压测结果调整
+          # -------------------------------------------------------------
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          # -------------------------------------------------------------
+          # 就绪探针：Pod 准备好接收流量才会被加入 Service endpoints
+          # HTTP GET /actuator/health on 8081（管理端口）
+          # -------------------------------------------------------------
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 30    # 启动后 30 秒开始探测
+            periodSeconds: 10          # 每 10 秒探测一次
+            timeoutSeconds: 5          # 探测超时
+            failureThreshold: 3        # 连续失败 3 次标记未就绪
+          # -------------------------------------------------------------
+          # 存活探针：失败则重启容器
+          # HTTP GET /actuator/health on 8081
+          # -------------------------------------------------------------
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+              scheme: HTTP
+            initialDelaySeconds: 60    # 启动后 60 秒开始探测（给应用足够启动时间）
+            periodSeconds: 20          # 每 20 秒探测一次
+            timeoutSeconds: 5
+            failureThreshold: 5        # 连续失败 5 次重启
+          # -------------------------------------------------------------
+          # 启动探针：保护慢启动应用（JVM 预热阶段）
+          # 启动期间内禁用 liveness/readiness，避免误杀
+          # -------------------------------------------------------------
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+              scheme: HTTP
+            failureThreshold: 30       # 失败 30 次才放弃
+            periodSeconds: 10           # 每 10 秒探测一次，最长 5 分钟启动时间
+          # -------------------------------------------------------------
+          # 安全上下文：以非 root 用户 UID=1000 运行
+          # 与 Dockerfile USER 1000 一致
+          # -------------------------------------------------------------
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false  # 应用需写日志，根文件系统不设只读
+            allowPrivilegeEscalation: false

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-parent : 企业云原生大单体业务管理系统脚手架 - 顶层 POM
+  ====================================================================================
+  职责：
+    1. 聚合所有子模块（dependencies / framework / common / generator / backend / startup）
+    2. 通过 import dependencies BOM 实现版本统一锁定
+    3. 统一声明 Java 17 编译插件、资源编码、Maven 仓库镜像
+  依赖链路（恒为 impl -> api，永不循环）：
+    fatjar-parent
+      ├── fatjar-dependencies (BOM，独立无 parent)
+      ├── fatjar-framework (聚合 7 个自定义 Starter)
+      ├── fatjar-common
+      ├── fatjar-generator
+      ├── fatjar-backend (聚合 5 个业务根 auth/erp/oa/crm/ems)
+      ├── fatjar-startup
+      ├── fatjar-frontend (聚合 website / admin-vue3 / uniapp)
+      └── fatjar-deployment (资源目录，非 Maven 模块)
+  编译提示：Windows 下若出现 GBK 乱码，设置环境变量
+      JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ============ 基础坐标 ============ -->
+    <groupId>com.workspace.fatjar</groupId>
+    <artifactId>fatjar-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>fatjar-parent</name>
+    <description>企业云原生大单体业务管理系统脚手架 - 顶层依赖管理</description>
+
+    <!-- ============ 子模块聚合 ============ -->
+    <modules>
+        <module>dependencies</module>      <!-- 版本 BOM，独立无 parent -->
+        <module>framework</module>          <!-- 技术工具箱：7 个自定义 Starter -->
+        <module>common</module>             <!-- 通用工具/异常/枚举/雪花ID/状态机 -->
+        <module>generator</module>          <!-- 代码生成器 -->
+        <module>backend</module>            <!-- 业务父：5 个业务根 (auth/erp/oa/crm/ems) -->
+        <module>startup</module>            <!-- 启动入口 -->
+        <module>frontend</module>           <!-- 前端聚合：website/admin-vue3/uniapp -->
+    </modules>
+
+    <!-- ============ 版本管理：导入 dependencies BOM ============ -->
+    <properties>
+        <fatjar.version>1.0.0</fatjar.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 引入 fatjar-dependencies BOM 锁定所有第三方与自研模块版本 -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-dependencies</artifactId>
+                <version>${fatjar.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ============ 构建配置 ============ -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Spring Boot Maven 插件版本锁定（仅 startup 使用） -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>3.2.5</version>
+                </plugin>
+                <!-- Maven 编译插件：统一 Java 17 + UTF-8 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>UTF-8</encoding>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <!-- Lombok 编译期注解处理器 -->
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>1.18.32</version>
+                            </path>
+                            <!-- MapStruct 编译期注解处理器 -->
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>1.5.5.Final</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <!-- 资源插件：替换 @..@ 占位符 + UTF-8 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <configuration>
+                        <encoding>UTF-8</encoding>
+                        <useDefaultDelimiters>false</useDefaultDelimiters>
+                        <delimiters>
+                            <delimiter>@</delimiter>
+                        </delimiters>
+                    </configuration>
+                </plugin>
+                <!-- 单元测试插件 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                    <configuration>
+                        <argLine>-Dfile.encoding=UTF-8</argLine>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- ============ 仓库镜像：加速国内依赖下载 ============ -->
+    <repositories>
+        <repository>
+            <id>aliyun-public</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+            <id>aliyun-spring</id>
+            <url>https://maven.aliyun.com/repository/spring</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>aliyun-plugin</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+</project>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================================
+  fatjar 企业云原生大单体业务管理系统 - 官网首页 index.html
+  ------------------------------------------------------------------------------------
+  页面结构（自上而下）：
+    1. 顶部导航栏 navbar：Logo + 菜单 + GitHub 链接
+    2. Hero 区：主标题、副标题、CTA 按钮
+    3. 产品特性区：6 个特性卡片（大单体脚手架特性）
+    4. 技术栈展示：Spring Boot 3 / Vue3 / uniapp / MySQL / Redis / Nacos / RocketMQ
+    5. 页脚 footer：版权信息 + 友链
+  技术栈：原生 HTML5 + CSS3 Flexbox/Grid + 少量 JS（main.js）
+  响应式：移动端 < 768px 切换为单列布局
+  ====================================================================================
+-->
+<html lang="zh-CN">
+<head>
+    <!-- 文档字符集：UTF-8，避免中文乱码 -->
+    <meta charset="UTF-8">
+    <!-- 移动端视口适配：宽度=设备宽度，初始缩放=1.0 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- SEO：页面描述 -->
+    <meta name="description" content="fatjar 企业云原生大单体业务管理系统脚手架 - 集成认证/ERP/OA/CRM/EMS 全域业务">
+    <!-- SEO：关键词 -->
+    <meta name="keywords" content="fatjar,大单体,脚手架,Spring Boot 3,Vue3,云原生,ERP,CRM,OA,EMS">
+    <!-- 浏览器标签页标题 -->
+    <title>fatjar 企业云原生大单体业务管理系统</title>
+    <!-- 引入外部样式表 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ==================== 1. 顶部导航栏 ==================== -->
+<header class="navbar" id="navbar">
+    <div class="container nav-inner">
+        <!-- Logo 区域 -->
+        <a href="#hero" class="logo">
+            <span class="logo-mark">F</span>
+            <span class="logo-text">fatjar</span>
+        </a>
+        <!-- 主菜单：href 锚点定位到对应区块，配合 main.js 平滑滚动 -->
+        <nav class="nav-menu">
+            <a href="#features" class="nav-link">特性</a>
+            <a href="#techstack" class="nav-link">技术栈</a>
+            <a href="#modules" class="nav-link">业务模块</a>
+            <a href="http://localhost:8080/doc.html" class="nav-link" target="_blank">API 文档</a>
+        </nav>
+        <!-- GitHub 跳转按钮 -->
+        <a href="#" class="btn btn-outline" target="_blank">GitHub</a>
+        <!-- 移动端菜单按钮（隐藏在桌面端，main.js 切换显隐） -->
+        <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>
+
+<!-- ==================== 2. Hero 区 ==================== -->
+<section class="hero" id="hero">
+    <div class="container hero-inner">
+        <!-- 主标题：突出"大单体"定位 -->
+        <h1 class="hero-title">企业云原生<br>大单体业务管理系统脚手架</h1>
+        <!-- 副标题：核心价值 -->
+        <p class="hero-subtitle">
+            一个 fatjar 搞定 auth / erp / oa / crm / ems 五大业务域，
+            内置 Spring Boot 3 + Spring Cloud Alibaba 全套云原生能力。
+        </p>
+        <!-- CTA 按钮：主按钮跳转后台，次按钮查看文档 -->
+        <div class="hero-actions">
+            <a href="http://localhost:5173" class="btn btn-primary" target="_blank">进入管理后台</a>
+            <a href="#features" class="btn btn-ghost">了解更多</a>
+        </div>
+        <!-- 关键指标展示 -->
+        <div class="hero-stats">
+            <div class="stat"><strong>5</strong><span>业务域</span></div>
+            <div class="stat"><strong>7</strong><span>自研 Starter</span></div>
+            <div class="stat"><strong>3</strong><span>前端工程</span></div>
+            <div class="stat"><strong>17</strong><span>JDK 版本</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 3. 产品特性区 ==================== -->
+<section class="section" id="features">
+    <div class="container">
+        <!-- 区块标题 -->
+        <div class="section-head">
+            <h2 class="section-title">大单体脚手架核心特性</h2>
+            <p class="section-desc">为什么选择 fatjar？六大特性让企业级开发更高效</p>
+        </div>
+        <!-- 特性卡片网格：CSS Grid 自适应列数 -->
+        <div class="features-grid">
+            <!-- 特性卡片 1：单进程一体化 -->
+            <div class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h3>大单体架构</h3>
+                <p>一个 fatjar 包打天下，无需 K8s 服务治理，部署运维成本最低，适合中小企业 99% 场景。</p>
+            </div>
+            <!-- 特性卡片 2：业务域聚合 -->
+            <div class="feature-card">
+                <div class="feature-icon">🏛️</div>
+                <h3>五域聚合</h3>
+                <p>auth 认证 / erp 进销存 / oa 协同 / crm 客户 / ems 设备，模块解耦、统一调度。</p>
+            </div>
+            <!-- 特性卡片 3：7 个自研 Starter -->
+            <div class="feature-card">
+                <div class="feature-icon">🧩</div>
+                <h3>自研 Starter</h3>
+                <p>Security / MybatisPlus / Redis / RocketMQ / Logback / Knife4j / OSS 七大 Starter 即插即用。</p>
+            </div>
+            <!-- 特性卡片 4：云原生能力 -->
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h3>云原生就绪</h3>
+                <p>Nacos 配置中心 + 注册中心、Sentinel 流控、SkyWalking 链路追踪，平滑过渡到微服务。</p>
+            </div>
+            <!-- 特性卡片 5：代码生成器 -->
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>代码生成器</h3>
+                <p>基于 MyBatis-Plus，一键生成 Entity/Mapper/Service/Controller/Vue 前端，CRUD 5 分钟搞定。</p>
+            </div>
+            <!-- 特性卡片 6：多端覆盖 -->
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>多端覆盖</h3>
+                <p>HTML5 官网 + Vue3 管理后台 + uniapp 移动端（H5/微信小程序/安卓/iOS），全端通吃。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 4. 技术栈展示 ==================== -->
+<section class="section section-alt" id="techstack">
+    <div class="container">
+        <div class="section-head">
+            <h2 class="section-title">技术栈一览</h2>
+            <p class="section-desc">主流开源技术选型，稳定、可靠、社区活跃</p>
+        </div>
+        <!-- 技术栈分类展示 -->
+        <div class="tech-categories">
+            <!-- 后端栈 -->
+            <div class="tech-group">
+                <h4 class="tech-group-title">后端</h4>
+                <ul class="tech-list">
+                    <li>JDK 17</li>
+                    <li>Spring Boot 3.2</li>
+                    <li>Spring Security 6</li>
+                    <li>MyBatis-Plus 3.5</li>
+                    <li>Lombok / MapStruct</li>
+                </ul>
+            </div>
+            <!-- 中间件栈 -->
+            <div class="tech-group">
+                <h4 class="tech-group-title">中间件</h4>
+                <ul class="tech-list">
+                    <li>MySQL 8.0</li>
+                    <li>Redis 7</li>
+                    <li>RocketMQ 5.x</li>
+                    <li>Nacos 2.x</li>
+                    <li>XXL-JOB</li>
+                </ul>
+            </div>
+            <!-- 前端栈 -->
+            <div class="tech-group">
+                <h4 class="tech-group-title">前端</h4>
+                <ul class="tech-list">
+                    <li>HTML5 / CSS3</li>
+                    <li>Vue 3.4</li>
+                    <li>Element Plus</li>
+                    <li>Vite 5</li>
+                    <li>uni-app</li>
+                </ul>
+            </div>
+            <!-- DevOps 栈 -->
+            <div class="tech-group">
+                <h4 class="tech-group-title">DevOps</h4>
+                <ul class="tech-list">
+                    <li>Maven 3.9 / mvnd</li>
+                    <li>Docker</li>
+                    <li>SkyWalking</li>
+                    <li>Sentinel</li>
+                    <li>Knife4j</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 5. 业务模块区 ==================== -->
+<section class="section" id="modules">
+    <div class="container">
+        <div class="section-head">
+            <h2 class="section-title">五大业务域模块</h2>
+            <p class="section-desc">开箱即用的企业级业务能力</p>
+        </div>
+        <div class="modules-grid">
+            <div class="module-card"><span class="module-tag">AUTH</span><h3>统一认证中心</h3><p>JWT + RBAC + 数据权限 + 接口鉴权</p></div>
+            <div class="module-card"><span class="module-tag">ERP</span><h3>进销存管理</h3><p>商品/采购/销售/库存/盘点全流程</p></div>
+            <div class="module-card"><span class="module-tag">OA</span><h3>协同办公</h3><p>审批流/通知公告/会议/日程</p></div>
+            <div class="module-card"><span class="module-tag">CRM</span><h3>客户关系</h3><p>线索/商机/合同/跟进/回款</p></div>
+            <div class="module-card"><span class="module-tag">EMS</span><h3>设备管理</h3><p>设备台账/账户/告警/巡检</p></div>
+            <div class="module-card module-card-more"><h3>更多模块</h3><p>持续迭代中…</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 6. 页脚 ==================== -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <div class="footer-brand">
+            <span class="logo-mark">F</span>
+            <span>fatjar 企业云原生大单体脚手架</span>
+        </div>
+        <div class="footer-links">
+            <a href="#hero">首页</a>
+            <a href="#features">特性</a>
+            <a href="#techstack">技术栈</a>
+            <a href="http://localhost:8080/doc.html" target="_blank">API 文档</a>
+        </div>
+        <div class="footer-copy">
+            <!-- 版权信息：动态年份由 main.js 注入 -->
+            &copy; <span id="year"></span> fatjar. All rights reserved. Built with ❤️ for developers.
+        </div>
+    </div>
+</footer>
+
+<!-- 引入 JS：放在 body 末尾，避免阻塞渲染 -->
+<script src="js/main.js"></script>
+</body>
+</html>

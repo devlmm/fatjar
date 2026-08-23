@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================================
+  fatjar 管理后台 - Vite 根 HTML 模板 index.html
+  ------------------------------------------------------------------------------------
+  说明：
+    1. Vite 入口文件，<script type="module" src="/src/main.js"> 加载 Vue 应用
+    2. <div id="app"> 是 Vue 挂载点
+    3. 标题、favicon、meta 由 Vite 在打包时注入
+  ====================================================================================
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- 移动端视口适配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- SEO 描述 -->
+    <meta name="description" content="fatjar 企业云原生大单体业务管理系统 - 管理后台" />
+    <!-- 页面标题 -->
+    <title>fatjar 管理后台</title>
+  </head>
+  <body>
+    <!-- Vue 应用挂载点：main.js 中 app.mount('#app') -->
+    <div id="app"></div>
+    <!-- ES 模块方式加载入口脚本 -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

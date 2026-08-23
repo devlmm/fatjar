@@ -1,0 +1,4 @@
+com.workspace.fatjar.framework.web.config.GlobalExceptionHandler
+com.workspace.fatjar.framework.web.config.CorsConfig
+com.workspace.fatjar.framework.web.config.Knife4jConfig
+com.workspace.fatjar.framework.web.filter.TraceIdFilter

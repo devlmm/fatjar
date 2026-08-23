@@ -1,0 +1,16 @@
+# =====================================================================
+# fatjar K8s 部署 - Namespace 定义
+# 作用：将 fatjar 所有资源隔离在独立命名空间内，便于权限/资源/监控管理
+# 应用方式：kubectl apply -f namespace.yaml
+# =====================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  # 命名空间名称：fatjar
+  name: fatjar
+  # 标签：标识命名空间归属和用途
+  labels:
+    app.kubernetes.io/name: fatjar
+    app.kubernetes.io/part-of: fatjar-platform
+    # 环境标签：dev/sit/prd，可按需调整
+    environment: dev

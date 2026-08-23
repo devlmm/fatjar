@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  FatjarGenerator 日志配置
+  ------------------------------------------------------------------------------------
+  职责：
+    为代码生成器模块提供独立的 Logback 配置，控制台输出彩色日志，便于调试。
+  特性：
+    1. 控制台输出，UTF-8 编码，避免 Windows 平台中文乱码
+    2. 控制器日志级别 INFO，框架日志（MyBatis-Plus / Velocity）降到 WARN 减少噪音
+    3. 不输出文件日志（工具模块无需持久化日志）
+  ====================================================================================
+-->
+<configuration>
+
+    <!-- ============ 控制台日志输出：彩色模式 ============ -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- 彩色日志格式：%d 时间 %thread 线程 %highlight(级别) %logger 类名 %msg 内容 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ============ 日志级别 ============ -->
+    <!-- 根日志级别 INFO -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- ============ 第三方框架日志降噪 ============ -->
+    <!-- MyBatis-Plus 生成器内部日志降噪 -->
+    <logger name="com.baomidou.mybatisplus.generator" level="WARN"/>
+    <!-- Velocity 模板引擎日志降噪 -->
+    <logger name="org.apache.velocity" level="WARN"/>
+    <!-- MyBatis 日志降噪 -->
+    <logger name="com.baomidou.mybatisplus" level="WARN"/>
+    <!--本项目自带日志保留 INFO，便于观察生成过程 -->
+    <logger name="com.workspace.fatjar.generator" level="INFO"/>
+</configuration>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  ====================================================================================
+  SysUserMapper.xml : 系统用户手写 SQL
+  ------------------------------------------------------------------------------------
+  namespace 与 Java 接口全限定名一致，由 MyBatis 自动绑定。
+  基础 CRUD（save/getById/update/remove 等）由 BaseMapper 提供，此处仅定义自定义方法。
+  注意：手写 SQL 不会自动应用 MyBatis-Plus 全局逻辑删除，需手动添加 deleted = 0 条件。
+  ====================================================================================
+-->
+<mapper namespace="com.workspace.fatjar.auth.mapper.SysUserMapper">
+
+    <!-- 通用结果映射（驼峰自动映射，显式声明便于维护） -->
+    <resultMap id="sysUserResultMap" type="com.workspace.fatjar.auth.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="password" property="password"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="status" property="status"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <!--
+      根据用户名查询用户（登录场景使用）
+      限定未删除（deleted = 0）的记录
+    -->
+    <select id="selectByUsername" resultMap="sysUserResultMap">
+        SELECT id, username, nickname, password, phone, email, status, tenant_id,
+               create_time, update_time, create_by, update_by, deleted
+        FROM auth.sys_user
+        WHERE username = #{username}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+</mapper>

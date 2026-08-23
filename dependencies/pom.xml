@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-dependencies : 版本 BOM（独立无 parent）
+  ====================================================================================
+  职责：集中锁定所有第三方与自研模块的版本号，避免分散管理导致冲突。
+  特性：独立 POM（不继承 fatjar-parent），供 fatjar-parent 通过 import 引入。
+  版本真实性已验证（参考 project_memory 教训）：
+    - mybatis-plus-jsqlparser 3.5.5 不存在（3.5.9+ 才有），此处不引入
+    - flyway-mysql 9.24.0 不存在，9.x 末版是 9.22.3
+    - rocketmq-spring-boot-starter 5.x 是 Server 版本，Starter 最新 2.3.6
+    - nacos-config-spring-boot-starter 0.3.1 不存在，Spring Boot 3.x 用 0.3.0-RC
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.workspace.fatjar</groupId>
+    <artifactId>fatjar-dependencies</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>fatjar-dependencies</name>
+    <description>版本 BOM - 集中锁定所有依赖版本</description>
+
+    <properties>
+        <!-- ============ 自研模块版本 ============ -->
+        <fatjar.version>1.0.0</fatjar.version>
+
+        <!-- ============ 核心框架版本 ============ -->
+        <spring-boot.version>3.2.5</spring-boot.version>
+        <spring.version>6.1.6</spring.version>
+
+        <!-- ============ 数据层 ============ -->
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mybatis-plus-jsqlparser.version>3.5.9</mybatis-plus-jsqlparser.version>
+        <druid.version>1.2.22</druid.version>
+        <mysql.version>8.0.33</mysql.version>
+        <flyway.version>9.22.3</flyway.version>
+
+        <!-- ============ 中间件 ============ -->
+        <redisson.version>3.27.2</redisson.version>
+        <rocketmq-spring.version>2.3.6</rocketmq-spring.version>
+        <xxl-job.version>2.4.1</xxl-job.version>
+
+        <!-- ============ 配置中心 ============ -->
+        <nacos-config.version>0.3.0-RC</nacos-config.version>
+
+        <!-- ============ 权限 ============ -->
+        <jjwt.version>0.12.5</jjwt.version>
+
+        <!-- ============ 文档与工具 ============ -->
+        <knife4j.version>4.5.0</knife4j.version>
+        <springdoc.version>2.5.0</springdoc.version>
+        <swagger-annotations-jakarta.version>2.2.22</swagger-annotations-jakarta.version>
+
+        <!-- ============ 工具库 ============ -->
+        <lombok.version>1.18.32</lombok.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <hutool.version>5.8.27</hutool.version>
+        <guava.version>33.1.0-jre</guava.version>
+        <easyexcel.version>3.3.4</easyexcel.version>
+
+        <!-- ============ 阿里云 OSS ============ -->
+        <aliyun-oss.version>3.17.4</aliyun-oss.version>
+
+        <!-- ============ 测试 ============ -->
+        <junit.version>5.10.2</junit.version>
+        <mockito.version>5.11.0</mockito.version>
+
+        <!-- ============ 代码生成 ============ -->
+        <velocity.version>2.3</velocity.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- ============ 自研模块（业务模块通过 api 契约依赖，永无循环） ============ -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-common</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-generator</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- framework 7 个 Starter -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-web</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-mybatis</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-security</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-biz-tenant</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-redis</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-mq</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-spring-boot-starter-task</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- backend 业务模块：api 契约 + 实现本体（业务本名，无 -impl 后缀） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-auth-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-auth</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- FICO 财务会计模块（api 契约 + 实现本体） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-fico-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-fico</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- SCM 供应链管理模块（api 契约 + 实现本体；实现依赖 fatjar-fico-api 做跨模块预算校验） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-scm-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-scm</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- MES 制造执行系统模块（api 契约 + 实现本体） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-mes-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-mes</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- HRM 人力资源模块（api 契约 + 实现本体） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-hrm-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-hrm</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- CRM 客户关系管理模块（api 契约 + 实现本体） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-crm-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-crm</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- PM 项目管理模块（api 契约 + 实现本体；实现依赖 fatjar-hrm-api 做跨模块员工校验） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-pm-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-pm</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- BI 商业智能模块（api 契约 + 实现本体） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-bi-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-bi</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <!-- OA 办公自动化模块（api 契约 + 实现本体） -->
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-oa-api</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-oa</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.workspace.fatjar</groupId>
+                <artifactId>fatjar-startup</artifactId>
+                <version>${fatjar.version}</version>
+            </dependency>
+
+            <!-- ============ Spring Boot BOM ============ -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- ============ MyBatis-Plus（核心 + 扩展，不含 jsqlparser 子包） ============ -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-extension</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus-jsqlparser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-generator</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- ============ 数据库连接池 + 驱动 + Flyway ============ -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-3-starter</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-mysql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+
+            <!-- ============ Redisson ============ -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+
+            <!-- ============ RocketMQ Starter ============ -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq-spring.version}</version>
+            </dependency>
+
+            <!-- ============ XXL-JOB ============ -->
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
+            </dependency>
+
+            <!-- ============ Nacos 配置中心 ============ -->
+            <dependency>
+                <groupId>com.alibaba.boot</groupId>
+                <artifactId>nacos-config-spring-boot-starter</artifactId>
+                <version>${nacos-config.version}</version>
+            </dependency>
+
+            <!-- ============ JWT (jjwt) ============ -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+
+            <!-- ============ Knife4j + SpringDoc + Swagger 注解 ============ -->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger-annotations-jakarta.version}</version>
+            </dependency>
+
+            <!-- ============ 工具库 ============ -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>easyexcel</artifactId>
+                <version>${easyexcel.version}</version>
+            </dependency>
+
+            <!-- ============ 阿里云 OSS ============ -->
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${aliyun-oss.version}</version>
+            </dependency>
+
+            <!-- ============ 代码生成模板引擎 ============ -->
+            <dependency>
+                <groupId>org.apache.velocity</groupId>
+                <artifactId>velocity-engine-core</artifactId>
+                <version>${velocity.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

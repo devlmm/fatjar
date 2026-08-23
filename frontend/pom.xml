@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-frontend : 前端聚合（非 Maven 构建，仅作目录占位聚合）
+  ====================================================================================
+  3 个前端子项目，各自独立启动，访问后端 Restful API：
+    1. website      : HTML5 静态官网（独立启动，前端静态官网）
+    2. admin-vue3   : Vue3 管理后台（统一大后台，必备功能菜单）
+    3. uniapp       : uniapp 移动端（苹果/安卓/微信小程序）
+  说明：packaging=pom 仅作聚合占位；前端实际通过 npm/pnpm 构建，不参与 Maven 编译。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-frontend</artifactId>
+    <packaging>pom</packaging>
+    <name>fatjar-frontend</name>
+    <description>前端聚合 - website / admin-vue3 / uniapp（各自独立启动）</description>
+
+    <modules>
+        <module>website</module>
+        <module>admin-vue3</module>
+        <module>uniapp</module>
+    </modules>
+
+    <build>
+        <!-- 前端目录无 Java 源码，跳过 Maven 编译/资源处理 -->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

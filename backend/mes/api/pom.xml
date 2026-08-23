@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-mes-api : 制造执行系统模块门面契约
+  ====================================================================================
+  职责：
+    1. 暴露跨模块调用的契约接口（MesWorkOrderApi）与对外 DTO/RO
+    2. 不包含 entity 等业务实现细节，避免被依赖方耦合到具体实现
+    3. 其他业务模块通过依赖本模块即可调用 mes 能力（如工单查询）
+  依赖：
+    - fatjar-common：通用 R/异常/UserContext/BaseEntity 等
+    - swagger-annotations-jakarta：仅注解（@Schema/@Tag），无运行时依赖
+    - lombok(provided)：编译期注解处理，不传递
+  设计原则：本模块零业务实现、零技术 starter 依赖，仅契约 + 数据模型。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-mes-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>fatjar-mes-api</artifactId>
+    <name>fatjar-mes-api</name>
+    <description>制造执行系统模块门面契约 - api 接口 + ro + dto，无 entity 实现</description>
+    <dependencies>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations-jakarta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

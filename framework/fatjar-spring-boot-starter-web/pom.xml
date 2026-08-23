@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-web : Web 层封装
+  ====================================================================================
+  职责：
+    1. 统一全局异常处理 GlobalExceptionHandler（BizException / 校验异常 / 未知异常 -> R）
+    2. 统一 CORS 跨域配置 CorsConfig
+    3. Knife4j + SpringDoc OpenAPI 文档自动装配
+    4. 链路追踪 TraceIdFilter（MDC 注入 + 响应头回写）
+  自动装配：META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+  依赖：spring-boot-starter-web + validation + knife4j + springdoc + fatjar-common
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-web</artifactId>
+    <name>fatjar-spring-boot-starter-web</name>
+    <description>Web 层封装 - 全局异常/CORS/Knife4j 文档/TraceId 链路追踪</description>
+
+    <dependencies>
+        <!-- Spring Boot Web + 校验 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- 配置元数据生成（@ConfigurationProperties 提示） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Knife4j（基于 OpenAPI3 + Jakarta） -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+        </dependency>
+        <!-- SpringDoc OpenAPI WebMvc UI（Swagger UI 页面） -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+        <!-- 自研通用模块（R / BizException / ErrorCode / CommonConstants / UserContext） -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+        <!-- Lombok：@Data/@Slf4j 注解支持（provided 不传递，仅编译期需要） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

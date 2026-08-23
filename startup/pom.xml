@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-startup : 启动入口模块
+  ====================================================================================
+  职责：
+    1. 提供 Spring Boot 启动主类 FatjarApplication
+    2. 整合所有业务实现模块（fatjar-auth/erp/oa/crm/ems）+ 7 个技术 Starter
+    3. 集中扫描所有业务 Mapper（@MapperScan com.workspace.fatjar.**.mapper）
+    4. 初始化雪花 ID 生成器（IdGeneratorHolder.autoInit）
+    5. 承载 DEV/SIT/PRD 三环境配置（bootstrap.yml + application-{env}.yml）
+    6. 跨模块集成测试（AuthServiceTest/ProductServiceTest/AccountServiceTest）
+  依赖说明：
+    - 仅直接依赖 5 个业务实现 jar（fatjar-auth/erp/oa/crm/ems），其对应的 api 契约通过
+      传递依赖自动引入，无需重复声明
+    - 7 个 Starter 按需引入（web/mybatis/security/biz-tenant/redis/mq/task）
+    - 不包含任何业务编排代码，startup 只做启动与横切配置（符合架构原则）
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-startup</artifactId>
+    <name>fatjar-startup</name>
+    <description>启动入口模块 - 整合业务模块 + Starter，统一启动管理</description>
+
+    <dependencies>
+        <!-- ============ 9 个业务实现模块（api 契约随传递依赖引入） ============ -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-fico</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-scm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-mes</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-hrm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-crm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-pm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-bi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-oa</artifactId>
+        </dependency>
+
+        <!-- ============ 7 个技术 Starter ============ -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-biz-tenant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-mq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-task</artifactId>
+        </dependency>
+
+        <!-- ============ Nacos 配置中心 ============ -->
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>nacos-config-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Actuator（健康检查，端口 8081） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- 通用模块（显式声明，便于测试直接引用） -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>fatjar-startup-${project.version}</finalName>
+        <plugins>
+            <!-- Spring Boot 打包插件：产出可执行 fatjar -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.workspace.fatjar.FatjarApplication</mainClass>
+                    <addResources>true</addResources>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 跳过测试（CI 单独跑测试阶段） -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

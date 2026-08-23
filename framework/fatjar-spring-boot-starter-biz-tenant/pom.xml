@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-biz-tenant : 多租户封装（默认关闭）
+  ====================================================================================
+  职责：fatjar.tenant.enabled=true 时，注册带 TenantLineInnerInterceptor 的 MybatisPlusInterceptor，
+        自动为所有 SQL 拼接 tenant_id 条件，实现行级租户隔离。
+  依赖：mybatis-plus-extension + mybatis-plus-jsqlparser(3.5.9) + fatjar-common
+  说明：默认关闭，避免业务表无 tenant_id 列时 SQL 报错；启用前需确保所有业务表均含 tenant_id 列。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-biz-tenant</artifactId>
+    <name>fatjar-spring-boot-starter-biz-tenant</name>
+    <description>多租户封装 - TenantLineInnerInterceptor 自动拼接 tenant_id 条件（默认关闭）</description>
+
+    <dependencies>
+        <!-- MyBatis-Plus 扩展（TenantLineHandler / TenantLineInnerInterceptor / MybatisPlusInterceptor） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-extension</artifactId>
+        </dependency>
+        <!-- jsqlparser 独立子包（TenantLineInnerInterceptor SQL 解析依赖） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+        </dependency>
+
+        <!-- 自研通用模块（UserContextHolder / CommonConstants） -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

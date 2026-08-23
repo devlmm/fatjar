@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-backend : 业务父 POM（聚合 9 个业务根）
+  ====================================================================================
+  布局：门面 Facade + 业务本名实现「嵌套结构」
+    backend/{biz}/                  视觉业务根（aggregator pom, artifactId=fatjar-{biz}-parent）
+      ├── api/                       fatjar-{biz}-api：门面契约（api/+dto/+ro/，无 entity）
+      └── {biz}/                     fatjar-{biz}（业务本名，无 -impl）：entity/mapper/service/controller
+  9 个业务根：auth / fico / scm / mes / hrm / crm / pm / bi / oa
+  数据库隔离：单实例多库（database=schema），各业务独立数据库，@TableName("db.table")
+  跨模块依赖：impl 仅依赖对方 api 契约，永不依赖对方 impl，从根源规避 Maven 循环依赖。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-backend</artifactId>
+    <packaging>pom</packaging>
+    <name>fatjar-backend</name>
+    <description>业务父 POM - 聚合 9 个业务根 (auth/fico/scm/mes/hrm/crm/pm/bi/oa)</description>
+
+    <modules>
+        <module>auth</module>
+        <module>fico</module>
+        <module>scm</module>
+        <module>mes</module>
+        <module>hrm</module>
+        <module>crm</module>
+        <module>pm</module>
+        <module>bi</module>
+        <module>oa</module>
+    </modules>
+
+    <dependencies>
+        <!-- 全业务模块统一声明 Lombok（provided scope 不会传递，故在父 POM 统一声明） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

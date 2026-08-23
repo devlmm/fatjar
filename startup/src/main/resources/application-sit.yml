@@ -1,0 +1,36 @@
+# ====================================================================================
+# application-sit.yml - SIT 环境配置（阿里云测试环境）
+# ------------------------------------------------------------------------------------
+# SIT 与 PRD 在阿里云，通过 Nacos 注入实际地址；此处仅占位与覆盖日志级别。
+# 优先级：Nacos > application-sit.yml > application.yml
+# ====================================================================================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 实际地址由 Nacos application-common.yml 注入（${MYSQL_HOST}），此处占位
+    url: jdbc:mysql://${MYSQL_HOST:mysql-sit}:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: ${REDIS_HOST:redis-sit}
+      port: 6379
+
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESERVER:rocketmq-sit:9876}
+
+xxl:
+  job:
+    enabled: true
+    admin:
+      addresses: http://xxl-job-admin-sit:8085/xxl-job-admin
+    executor:
+      appname: fatjar-executor-sit
+      port: 9999
+
+# 日志级别：SIT 收敛到 INFO
+logging:
+  level:
+    root: INFO
+    com.workspace.fatjar: INFO

@@ -1,0 +1,26 @@
+# =====================================================================
+# fatjar K8s 部署 - Service 服务
+# 作用：为 fatjar-app Deployment 提供稳定的 ClusterIP 服务发现入口
+# 类型：ClusterIP（集群内访问，外部流量通过 Ingress 进入）
+# 应用方式：kubectl apply -f service.yaml -n fatjar
+# =====================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: fatjar-app-svc
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: fatjar
+    app.kubernetes.io/component: service
+spec:
+  # 服务类型：ClusterIP，仅集群内访问
+  type: ClusterIP
+  # 选择器：路由流量到标签 app=fatjar-app 的 Pod
+  selector:
+    app: fatjar-app
+  # 端口映射：Service 80 -> Pod 8080
+  ports:
+    - name: http
+      port: 80           # Service 暴露端口
+      targetPort: 8080   # Pod 业务容器端口（与 Deployment ports.name 一致或端口号）
+      protocol: TCP

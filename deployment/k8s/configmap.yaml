@@ -1,0 +1,40 @@
+# =====================================================================
+# fatjar K8s 部署 - ConfigMap 配置
+# 作用：存放非敏感的环境变量，供 Deployment 通过 envFrom 注入容器
+# 包含：MYSQL_HOST/REDIS_HOST/ROCKETMQ_NAMESERVER/NACOS_ADDR/FATJAR_WORKER_ID
+# 敏感信息（密码/密钥）放 Secret，不放 ConfigMap
+# 应用方式：kubectl apply -f configmap.yaml -n fatjar
+# =====================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fatjar-config
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: fatjar
+    app.kubernetes.io/component: config
+data:
+  # MySQL 主机地址：集群内 mysql StatefulSet 服务名
+  MYSQL_HOST: "mysql"
+
+  # Redis 主机地址：集群内 redis Deployment 服务名
+  REDIS_HOST: "redis"
+
+  # RocketMQ NameServer 地址：集群内服务名:端口
+  ROCKETMQ_NAMESERVER: "rocketmq-namesrv:9876"
+
+  # Nacos 服务地址：集群内服务名:端口
+  NACOS_ADDR: "nacos:8848"
+
+  # 雪花算法 worker-id（多副本需保证唯一，建议通过 Pod 名称后缀动态生成）
+  # 这里默认值 1，生产环境应使用 Init Container 或应用层动态分配
+  FATJAR_WORKER_ID: "1"
+
+  # XXL-JOB 调度中心地址（集群内服务）
+  XXL_JOB_ADMIN: "http://xxl-job-admin:8080/xxl-job-admin"
+
+  # Spring 激活的 profile（dev/sit/prd）
+  SPRING_PROFILES_ACTIVE: "dev"
+
+  # 时区
+  TZ: "Asia/Shanghai"

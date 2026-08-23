@@ -1,0 +1,39 @@
+# =====================================================================
+# fatjar K8s 部署 - Ingress 入口
+# 作用：通过域名 fatjar.example.com 路由外部流量到 fatjar-app-svc:80
+# 前置条件：集群需安装 Ingress Controller（如 nginx-ingress / traefik / ALB）
+# 应用方式：kubectl apply -f ingress.yaml -n fatjar
+# 注意：fatjar.example.com 为示例域名，需替换为真实域名或本地 hosts 配置
+# =====================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fatjar-ingress
+  namespace: fatjar
+  labels:
+    app.kubernetes.io/name: fatjar
+    app.kubernetes.io/component: ingress
+  annotations:
+    # nginx-ingress 注解：客户端最大上传 body 大小 50MB（业务有文件上传时需放开）
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    # 连接超时 60 秒
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    # 发送超时 60 秒
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    # 读取超时 60 秒
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  # Ingress Controller 类名（nginx-ingress 用 nginx，traefik 用 traefik）
+  ingressClassName: nginx
+  # 路由规则
+  rules:
+    - host: fatjar.example.com   # 替换为真实业务域名
+      http:
+        paths:
+          - path: /
+            pathType: Prefix     # 前缀匹配
+            backend:
+              service:
+                name: fatjar-app-svc   # 后端 Service 名
+                port:
+                  number: 80           # Service 端口

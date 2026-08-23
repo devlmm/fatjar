@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-redis : Redis + Redisson 封装
+  ====================================================================================
+  职责：注册类型化 RedisTemplate<String,Object>（String key + JSON value）与 StringRedisTemplate。
+        Redisson 由 redisson-spring-boot-starter 自动装配 RedissonClient，此处不重复。
+  依赖：spring-boot-starter-data-redis + redisson-spring-boot-starter + fatjar-common
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-redis</artifactId>
+    <name>fatjar-spring-boot-starter-redis</name>
+    <description>Redis 封装 - 类型化 RedisTemplate（String key + JSON value）+ Redisson 自动装配</description>
+
+    <dependencies>
+        <!-- Spring Boot Data Redis（Lettuce 连接 + RedisTemplate 自动配置） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!-- Redisson Starter（自动装配 RedissonClient，支持分布式锁/限流等） -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- 自研通用模块 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

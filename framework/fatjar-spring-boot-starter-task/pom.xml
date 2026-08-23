@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-task : XXL-JOB 任务调度封装
+  ====================================================================================
+  职责：装配 XxlJobSpringExecutor 执行器 Bean，从 xxl.job.* 配置读取参数。
+        XxlJobSpringExecutor 实现 SmartInitializingSingleton / DisposableBean，
+        Spring 自动在单例初始化后调用 start()、销毁时调用 destroy()，故 @Bean 无需 initMethod。
+  依赖：xxl-job-core(2.4.1) + fatjar-common
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-task</artifactId>
+    <name>fatjar-spring-boot-starter-task</name>
+    <description>XXL-JOB 封装 - 自动装配 XxlJobSpringExecutor 执行器</description>
+
+    <dependencies>
+        <!-- XXL-JOB 核心（XxlJobSpringExecutor / @XxlJob 注解） -->
+        <dependency>
+            <groupId>com.xuxueli</groupId>
+            <artifactId>xxl-job-core</artifactId>
+        </dependency>
+
+        <!-- 自研通用模块 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

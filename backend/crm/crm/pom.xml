@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-crm : 客户关系管理模块业务实现（业务本名，无 -impl 后缀）
+  ====================================================================================
+  职责：
+    1. 实现 fatjar-crm-api 暴露的门面契约（CrmCustomerApi）
+    2. 同时实现内部 CrmCustomerService 接口（一个 ServiceImpl 满足双契约）
+    3. 提供 Controller 入口（CrmCustomerController，CRUD）
+  依赖：
+    - fatjar-crm-api        ：门面契约（CrmCustomerApi + DTO + RO）
+    - fatjar-spring-boot-starter-web      ：Web 层（异常/CORS/Knife4j/校验）
+    - fatjar-spring-boot-starter-mybatis   ：MyBatis-Plus + Druid + 分页 / 乐观锁
+    - fatjar-common         ：通用 R/异常/UserContext/BaseEntity
+    - lombok(provided)
+  设计说明：
+    1. Mapper 由启动类 @MapperScan("com.workspace.fatjar.**.mapper") 统一扫描
+    2. 手写 SQL 全部放 resources/mapper 下 XML，Java 接口只保留方法声明 + @Param
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 crm 聚合根（fatjar-crm-parent），形成嵌套继承链 -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-crm-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-crm</artifactId>
+    <name>fatjar-crm</name>
+    <description>客户关系管理模块业务实现 - entity/mapper/service/controller</description>
+
+    <dependencies>
+        <!-- 本模块的门面契约（含 CrmCustomerApi + DTO + RO） -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-crm-api</artifactId>
+        </dependency>
+
+        <!-- 通用模块（R、BizException、UserContext、BaseEntity、CommonConstants 等） -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+
+        <!-- Web 层：统一异常 / CORS / Knife4j 文档 / 校验 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- MyBatis-Plus + Druid + 分页 / 乐观锁 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+
+        <!-- Lombok：编译期注解处理，provided 作用域不传递 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

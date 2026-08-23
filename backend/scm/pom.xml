@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-scm-parent : 供应链管理模块聚合器（aggregator）
+  ====================================================================================
+  职责：
+    1. 聚合 scm 模块的 api（门面契约）与 scm（业务本名实现）
+    2. 不直接依赖任何技术 starter，仅做模块组织
+  嵌套结构（门面 Facade + 业务本名实现）：
+    backend/scm/                  aggregator pom (artifactId=fatjar-scm-parent)
+      ├── api/                     fatjar-scm-api：门面契约（api/ScmPurchaseOrderApi + dto/ScmPurchaseOrderDTO + ro/ScmPurchaseOrderPageRO）
+      └── scm/                     fatjar-scm（业务本名，无 -impl 后缀）：entity/mapper/service/controller
+  跨模块依赖规则：业务实现模块之间通过 api 契约互相依赖，永不直接依赖对方实现，
+                  从根源规避 Maven 循环依赖。
+  跨模块示例：scm 实现依赖 fatjar-fico-api，在采购订单保存前调用 FicoVoucherApi.checkBudget 做预算校验。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-backend</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>fatjar-scm-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>fatjar-scm-parent</name>
+    <description>供应链管理模块聚合器 - 聚合 api 门面与 scm 业务实现</description>
+    <modules>
+        <module>api</module>
+        <module>scm</module>
+    </modules>
+</project>

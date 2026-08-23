@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-spring-boot-starter-mybatis : 数据层封装
+  ====================================================================================
+  职责：
+    1. MyBatis-Plus 拦截器自动装配（分页 + 乐观锁）
+    2. MetaObjectHandler 字段自动填充（雪花 ID / 时间戳 / 操作人 / 逻辑删除标识）
+  依赖：mybatis-plus-boot-starter + druid-spring-boot-3-starter + mysql-connector-j +
+        flyway-core + flyway-mysql + mybatis-plus-jsqlparser(3.5.9) + fatjar-common
+  说明：多租户 TenantLineInnerInterceptor 在 biz-tenant Starter 单独处理，此处不重复。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 fatjar-parent（d:\workspace\fatjar\pom.xml） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-spring-boot-starter-mybatis</artifactId>
+    <name>fatjar-spring-boot-starter-mybatis</name>
+    <description>数据层封装 - MyBatis-Plus 分页/乐观锁/字段自动填充 + Druid + Flyway</description>
+
+    <dependencies>
+        <!-- MyBatis-Plus 启动器（含 MyBatis-Spring） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+        <!-- jsqlparser 独立子包（MP 3.5.5 起拆分，分页/多租户 SQL 解析依赖） -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+        </dependency>
+
+        <!-- Druid 连接池（Spring Boot 3 适配版） -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+        </dependency>
+        <!-- MySQL 驱动 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+        </dependency>
+
+        <!-- Flyway 数据库版本管理（core + mysql 支持） -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
+        <!-- 自研通用模块（BaseEntity / IdGeneratorHolder / UserContextHolder / CommonConstants） -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

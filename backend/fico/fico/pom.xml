@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-fico : 财务会计模块业务实现（业务本名，无 -impl 后缀）
+  ====================================================================================
+  职责：
+    1. 实现 fatjar-fico-api 暴露的门面契约（FicoVoucherApi）
+    2. 同时实现内部 FicoVoucherService 接口（一个 ServiceImpl 满足双契约）
+    3. 提供 Controller 入口（FicoVoucherController）对外 CRUD
+  依赖：
+    - fatjar-fico-api        ：门面契约
+    - fatjar-common          ：通用 R/异常/UserContext/BaseEntity
+    - fatjar-spring-boot-starter-web      ：Web 层（异常/CORS/Knife4j/校验）
+    - fatjar-spring-boot-starter-mybatis   ：MyBatis-Plus + Druid
+    - lombok(provided)
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-fico-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>fatjar-fico</artifactId>
+    <name>fatjar-fico</name>
+    <description>财务会计模块业务实现 - entity/mapper/service/controller</description>
+    <dependencies>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-fico-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

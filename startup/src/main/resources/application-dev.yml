@@ -1,0 +1,36 @@
+# ====================================================================================
+# application-dev.yml - DEV 环境配置（本地内网）
+# ------------------------------------------------------------------------------------
+# 仅覆盖 DEV 与默认配置不同的部分，其余继承 application.yml 与 Nacos application-common.yml
+# ====================================================================================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+    type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# RocketMQ（DEV 本地，未安装可不配置）
+rocketmq:
+  name-server: localhost:9876
+
+# XXL-JOB 执行器（DEV）
+xxl:
+  job:
+    enabled: true
+    admin:
+      addresses: http://localhost:8085/xxl-job-admin
+    executor:
+      appname: fatjar-executor
+      port: 9999
+
+# 日志级别：DEV 详细日志
+logging:
+  level:
+    root: INFO
+    com.workspace.fatjar: DEBUG

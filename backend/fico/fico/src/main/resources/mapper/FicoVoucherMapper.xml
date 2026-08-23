@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  ====================================================================================
+  FicoVoucherMapper.xml : 会计凭证手写 SQL
+  ------------------------------------------------------------------------------------
+  namespace 与 Java 接口全限定名一致，由 MyBatis 自动绑定。
+  基础 CRUD（save/getById/update/remove 等）由 BaseMapper 提供，本模块无自定义 SQL，
+  故此处仅保留空 mapper 壳，后续按需补充自定义查询。
+  ====================================================================================
+-->
+<mapper namespace="com.workspace.fatjar.fico.mapper.FicoVoucherMapper">
+</mapper>

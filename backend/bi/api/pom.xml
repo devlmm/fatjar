@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-bi-api : 商业智能模块门面契约
+  ====================================================================================
+  职责：
+    1. 暴露跨模块调用的契约接口（BiReportApi）与对外 DTO/RO
+    2. 不包含 entity 等业务实现细节，避免被依赖方耦合到具体实现
+    3. 其他业务模块（auth/oa/crm 等）通过依赖本模块即可调用 bi 能力
+  依赖：
+    - fatjar-common：通用 R/异常/UserContext/BaseEntity 等
+    - swagger-annotations-jakarta：仅注解（@Schema/@Tag），无运行时依赖
+    - lombok(provided)：编译期注解处理，不传递
+  设计原则：本模块零业务实现、零技术 starter 依赖，仅契约 + 数据模型。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承 bi 聚合根（fatjar-bi-parent），形成嵌套继承链 -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-bi-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-bi-api</artifactId>
+    <name>fatjar-bi-api</name>
+    <description>商业智能模块门面契约 - api 接口 + ro + dto，无 entity 实现</description>
+
+    <dependencies>
+        <!-- 通用模块：统一返回 R、异常 BizException、UserContext、BaseEntity 等 -->
+        <dependency>
+            <groupId>com.workspace.fatjar</groupId>
+            <artifactId>fatjar-common</artifactId>
+        </dependency>
+
+        <!-- Swagger/OpenAPI 注解（@Schema/@Tag/@Operation），仅编译期 -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations-jakarta</artifactId>
+        </dependency>
+
+        <!-- Lombok：编译期注解处理，provided 作用域不传递 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

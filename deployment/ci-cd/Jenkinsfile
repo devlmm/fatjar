@@ -1,0 +1,185 @@
+// =====================================================================
+// fatjar 企业云原生大单体业务管理系统 - Jenkins 声明式 Pipeline
+// 流程：Checkout -> Compile -> Test -> Build Docker Image -> Push Registry -> Deploy K8s
+// 触发：Git push 到 main/prd 分支自动触发，或人工触发
+// 依赖：Jenkins 已安装 Maven、Docker、Kubernetes CLI 插件
+// =====================================================================
+
+pipeline {
+    // 任一可用 agent 执行流水线
+    agent any
+
+    // 工具：声明 Maven 版本（Jenkins 全局工具配置中需有 maven-3.9.x）
+    tools {
+        maven 'maven-3.9'
+        jdk 'jdk-17'
+    }
+
+    // 环境变量：在 stages 间共享
+    environment {
+        // 镜像仓库地址（按实际替换）
+        REGISTRY          = 'registry.cn-hangzhou.aliyuncs.com'
+        // 镜像命名空间/仓库名
+        IMAGE_NAME        = 'fatjar/fatjar-startup'
+        // 镜像版本：使用构建号 + git 短 commit
+        IMAGE_TAG         = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+        // 完整镜像引用
+        IMAGE_FULL        = "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+        // 部署目标命名空间
+        K8S_NAMESPACE     = 'fatjar'
+        // Docker 凭据 ID（Jenkins -> Credentials 中配置）
+        DOCKER_CREDENTIAL = 'aliyun-registry-credential'
+        // K8s 凭据 ID（kubeconfig）
+        KUBECONFIG_CRED   = 'fatjar-kubeconfig'
+    }
+
+    // 构建选项：不允许并发构建同分支
+    options {
+        disableConcurrentBuilds()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timestamps()
+    }
+
+    stages {
+
+        // =================================================================
+        // 阶段 1：Checkout - 拉取代码
+        // =================================================================
+        stage('Checkout') {
+            steps {
+                echo '========== [1/6] 拉取源码 =========='
+                // checkout scm 自动从配置的 Git 仓库拉取
+                checkout scm
+                // 输出最近 5 条 commit 信息便于追溯
+                sh 'git log --oneline -5 || true'
+            }
+        }
+
+        // =================================================================
+        // 阶段 2：Compile - Maven 编译打包
+        // 产出：startup/target/fatjar-startup-1.0.0.jar
+        // =================================================================
+        stage('Compile') {
+            steps {
+                echo '========== [2/6] Maven 编译打包 =========='
+                // -B 批处理模式，-V 输出版本，-DskipTests 跳过单测加快构建
+                // -pl startup -am 仅构建 startup 模块及其依赖
+                sh 'mvn -B -V clean package -DskipTests'
+                // 验证产物存在
+                sh 'ls -lh startup/target/fatjar-startup-1.0.0.jar'
+            }
+        }
+
+        // =================================================================
+        // 阶段 3：Test - 运行单元测试
+        // 单测失败则流水线中断
+        // =================================================================
+        stage('Test') {
+            steps {
+                echo '========== [3/6] 运行单元测试 =========='
+                // 运行测试并生成 surefire 报告
+                sh 'mvn -B test'
+            }
+            post {
+                // 无论成功失败，都收集测试报告
+                always {
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        // =================================================================
+        // 阶段 4：Build Docker Image - 构建镜像
+        // 使用 deployment/dockerfiles/Dockerfile
+        // =================================================================
+        stage('Build Docker Image') {
+            steps {
+                echo '========== [4/6] 构建 Docker 镜像 =========='
+                // 构建上下文为仓库根目录，Dockerfile 在 deployment/dockerfiles/
+                sh """
+                    docker build \
+                        -f deployment/dockerfiles/Dockerfile \
+                        -t ${IMAGE_FULL} \
+                        .
+                """
+                // 镜像列表确认
+                sh "docker images | grep fatjar-startup || true"
+            }
+        }
+
+        // =================================================================
+        // 阶段 5：Push Registry - 推送镜像到仓库
+        // 使用 Docker 凭据登录
+        // =================================================================
+        stage('Push Registry') {
+            steps {
+                echo '========== [5/6] 推送镜像到仓库 =========='
+                // 通过 withDockerRegistry 自动登录
+                withDockerRegistry(credentialsId: "${DOCKER_CREDENTIAL}", url: "https://${REGISTRY}") {
+                    sh "docker push ${IMAGE_FULL}"
+                }
+                // 推送 latest tag 便于回滚引用
+                sh "docker tag ${IMAGE_FULL} ${REGISTRY}/${IMAGE_NAME}:latest"
+                withDockerRegistry(credentialsId: "${DOCKER_CREDENTIAL}", url: "https://${REGISTRY}") {
+                    sh "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
+                }
+            }
+            post {
+                always {
+                    // 清理本地镜像，避免磁盘占用
+                    sh "docker rmi ${IMAGE_FULL} ${REGISTRY}/${IMAGE_NAME}:latest || true"
+                }
+            }
+        }
+
+        // =================================================================
+        // 阶段 6：Deploy K8s - 部署到 K8s 集群
+        // 滚动更新 fatjar-app Deployment
+        // =================================================================
+        stage('Deploy K8s') {
+            steps {
+                echo '========== [6/6] 部署到 K8s =========='
+                // 通过 kubeconfig 凭据部署
+                withCredentials([file(credentialsId: "${KUBECONFIG_CRED}", variable: 'KUBECONFIG')]) {
+                    // 应用 K8s 资源
+                    sh """
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f deployment/k8s/namespace.yaml
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f deployment/k8s/configmap.yaml -n ${K8S_NAMESPACE}
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f deployment/k8s/secret.yaml -n ${K8S_NAMESPACE}
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f deployment/k8s/service.yaml -n ${K8S_NAMESPACE}
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f deployment/k8s/ingress.yaml -n ${K8S_NAMESPACE}
+                    """
+                    // 更新 Deployment 镜像触发滚动更新
+                    sh """
+                        kubectl --kubeconfig=\$KUBECONFIG set image deployment/fatjar-app \
+                            fatjar-app=${IMAGE_FULL} -n ${K8S_NAMESPACE}
+                    """
+                    // 等待 rollout 完成（5 分钟超时）
+                    sh """
+                        kubectl --kubeconfig=\$KUBECONFIG rollout status deployment/fatjar-app \
+                            -n ${K8S_NAMESPACE} --timeout=300s
+                    """
+                }
+            }
+        }
+    }
+
+    // =================================================================
+    // 后置处理：失败通知，成功清理
+    // =================================================================
+    post {
+        success {
+            echo '✅ 流水线执行成功！'
+        }
+        failure {
+            echo '❌ 流水线执行失败，请检查日志'
+            // 可集成钉钉/企微通知
+            // dingtalk robot: ...
+        }
+        always {
+            echo '清理工作空间'
+            // deleteDir() // 如需清理工作空间可打开
+        }
+    }
+}

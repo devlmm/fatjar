@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-frontend-website : HTML5 静态官网（前端项目，不参与 Maven 编译）
+  ====================================================================================
+  说明：
+    1. packaging=pom 仅作占位，使 Maven 聚合能识别此目录
+    2. 通过 maven-jar-plugin 的 phase=none 跳过 jar 打包
+    3. 实际启动方式：python -m http.server 8090 或 nginx 静态托管
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 父 POM 指向 frontend/pom.xml（fatjar-frontend） -->
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-frontend</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-frontend-website</artifactId>
+    <packaging>pom</packaging>
+    <name>fatjar-frontend-website</name>
+    <description>HTML5 静态官网 - 大单体脚手架门户</description>
+
+    <build>
+        <!-- 前端目录无 Java 源码，跳过 jar 编译 -->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

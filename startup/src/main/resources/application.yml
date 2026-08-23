@@ -1,0 +1,64 @@
+# ====================================================================================
+# application.yml - 本地兜底配置（优先级最低，被 Nacos 与 application-{env}.yml 覆盖）
+# ------------------------------------------------------------------------------------
+# 仅保留 Nacos 不可用时的最小启动配置，生产环境以 Nacos 为准。
+# ====================================================================================
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  jackson:
+    # 全局 JSON 序列化：驼峰命名 + 时区
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+# MyBatis-Plus 配置（Nacos application-common.yml 会覆盖此项）
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 主键策略：INPUT 表示由应用层填充（雪花 ID），非数据库自增
+      id-type: INPUT
+      # 逻辑删除字段
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Actuator 健康检查（独立端口 8081，便于 K8s 探针与业务隔离）
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# JWT 配置（Nacos 可覆盖）
+fatjar:
+  jwt:
+    # 密钥（至少 32 字节，生产环境务必从 Nacos 注入）
+    secret: fatjar-secret-key-2024-must-be-at-least-32-bytes-long
+    # 过期时间（秒），默认 24 小时
+    expire: 86400
+  # 多租户默认关闭（erp/oa/crm/ems 业务表无 tenant_id 列，开启会报错）
+  tenant:
+    enabled: false
+  web:
+    # Knife4j 文档开关（DEV 开启，PRD 可关闭）
+    enable-knife4j: true
+
+# 日志
+logging:
+  level:
+    root: INFO
+    com.workspace.fatjar: INFO

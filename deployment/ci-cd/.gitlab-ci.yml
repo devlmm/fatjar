@@ -1,0 +1,164 @@
+# =====================================================================
+# fatjar 企业云原生大单体业务管理系统 - GitLab CI/CD 配置
+# 流程 stages: build -> test -> docker -> deploy
+# 镜像：maven:3.9-eclipse-temurin-17（自带 Maven + JDK17）
+# 触发：Git push 自动触发，按分支匹配不同环境
+# 依赖：GitLab Runner（docker executor）+ 配置 CI 变量（REGISTRY_USER/PASS 等）
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 全局默认：使用 docker executor，每个 job 在独立容器中执行
+# ---------------------------------------------------------------------
+default:
+  image: maven:3.9-eclipse-temurin-17
+  # Docker-in-Docker 服务（build 阶段需要 docker 命令）
+  services:
+    - docker:24-dind
+  # 在 job 之间缓存 Maven 仓库，加速构建
+  cache:
+    key:
+      files:
+        - pom.xml
+    paths:
+      - .m2/repository
+    policy: pull-push
+  # job 执行前设置 Maven 本地仓库路径
+  before_script:
+    - export MAVEN_OPTS="-Dmaven.repo.local=.m2/repository"
+    - export MAVEN_CLI_OPTS="-B -V --no-transfer-progress"
+
+# ---------------------------------------------------------------------
+# 流水线阶段顺序
+# ---------------------------------------------------------------------
+stages:
+  - build      # 编译打包
+  - test       # 单元测试
+  - docker     # 构建并推送 Docker 镜像
+  - deploy     # 部署到 K8s
+
+# ---------------------------------------------------------------------
+# 全局变量（非敏感）
+# 敏感变量在 GitLab -> Settings -> CI/CD -> Variables 配置
+#   REGISTRY_USER、REGISTRY_PASSWORD、KUBE_CONFIG、JWT_SECRET 等
+# ---------------------------------------------------------------------
+variables:
+  # 镜像仓库地址（阿里云容器镜像服务）
+  REGISTRY: "registry.cn-hangzhou.aliyuncs.com"
+  # 镜像名
+  IMAGE_NAME: "fatjar/fatjar-startup"
+  # 镜像 Tag：CI pipeline id + 短 commit
+  IMAGE_TAG: "${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}"
+  # 完整镜像引用
+  IMAGE_FULL: "${REGISTRY}/${IMAGE_NAME}:${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}"
+  # K8s 命名空间
+  K8S_NAMESPACE: "fatjar"
+  # Docker daemon 配置：不启用 TLS（DinD）
+  DOCKER_TLS_CERTDIR: ""
+
+# ===================================================================
+# Job 1: build - Maven 编译打包
+# ===================================================================
+build:
+  stage: build
+  script:
+    - echo "========== [1/4] Maven 编译打包 =========="
+    # 跳过测试，仅编译打包
+    - mvn $MAVEN_CLI_OPTS clean package -DskipTests
+    # 验证产物存在
+    - ls -lh startup/target/fatjar-startup-1.0.0.jar
+  # 产物：保留 jar 供下游 stage 使用
+  artifacts:
+    name: "fatjar-jar-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - startup/target/fatjar-startup-1.0.0.jar
+    expire_in: 1 hour
+  # 仅 main/sit/prd 分支触发
+  only:
+    - main
+    - sit
+    - prd
+    - tags
+
+# ===================================================================
+# Job 2: test - 单元测试
+# ===================================================================
+test:
+  stage: test
+  # 依赖 build 的产物
+  dependencies:
+    - build
+  script:
+    - echo "========== [2/4] 运行单元测试 =========="
+    - mvn $MAVEN_CLI_OPTS test
+  # 收集测试报告（GitLab 自动识别）
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - "**/target/surefire-reports/*.xml"
+  only:
+    - main
+    - sit
+    - prd
+    - tags
+
+# ===================================================================
+# Job 3: docker - 构建并推送 Docker 镜像
+# ===================================================================
+docker:
+  stage: docker
+  image: docker:24
+  # 依赖 build 的产物（jar 文件）
+  dependencies:
+    - build
+  script:
+    - echo "========== [3/4] 构建 Docker 镜像 =========="
+    # 登录镜像仓库（账号密码从 CI 变量读取）
+    - echo "$REGISTRY_PASSWORD" | docker login $REGISTRY -u "$REGISTRY_USER" --password-stdin
+    # 构建镜像
+    - docker build -f deployment/dockerfiles/Dockerfile -t $IMAGE_FULL .
+    # 推送镜像
+    - docker push $IMAGE_FULL
+    # 同时打 latest tag 并推送
+    - docker tag $IMAGE_FULL $REGISTRY/$IMAGE_NAME:latest
+    - docker push $REGISTRY/$IMAGE_NAME:latest
+    # 清理本地镜像
+    - docker rmi $IMAGE_FULL $REGISTRY/$IMAGE_NAME:latest || true
+  only:
+    - main
+    - sit
+    - prd
+    - tags
+
+# ===================================================================
+# Job 4: deploy - 部署到 K8s
+# 使用 bitnami/kubectl 镜像执行 kubectl 命令
+# ===================================================================
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:1.28
+  dependencies: []
+  script:
+    - echo "========== [4/4] 部署到 K8s =========="
+    # 通过 KUBE_CONFIG 变量配置 kubeconfig
+    - export KUBECONFIG=/tmp/.kube/config
+    - mkdir -p $(dirname $KUBECONFIG)
+    - echo "$KUBE_CONFIG" | base64 -d > $KUBECONFIG
+    # 应用资源清单
+    - kubectl apply -f deployment/k8s/namespace.yaml
+    - kubectl apply -f deployment/k8s/configmap.yaml -n $K8S_NAMESPACE
+    - kubectl apply -f deployment/k8s/secret.yaml -n $K8S_NAMESPACE
+    - kubectl apply -f deployment/k8s/service.yaml -n $K8S_NAMESPACE
+    - kubectl apply -f deployment/k8s/ingress.yaml -n $K8S_NAMESPACE
+    # 更新镜像触发滚动更新
+    - kubectl set image deployment/fatjar-app fatjar-app=$IMAGE_FULL -n $K8S_NAMESPACE
+    # 等待 rollout 完成（5 分钟超时）
+    - kubectl rollout status deployment/fatjar-app -n $K8S_NAMESPACE --timeout=300s
+  environment:
+    # 关联环境，可在 GitLab UI 查看部署历史
+    name: ${CI_COMMIT_REF_NAME}
+    url: https://fatjar.example.com
+  only:
+    # 仅 main 和 prd 分支自动部署，sit 分支手动触发
+    - main
+    - prd

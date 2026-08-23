@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ====================================================================================
+  fatjar-framework : 技术工具箱（聚合 7 个自定义 Spring Boot Starter）
+  ====================================================================================
+  设计理念：技术能力与业务实现解耦。每个 Starter 封装一类技术能力，
+            业务模块按需依赖（auth 用 web+security+mybatis+redis，erp 只用 web+mybatis）。
+  7 个 Starter：
+    1. fatjar-spring-boot-starter-web        : Web 层（统一异常/CORS/Knife4j/校验）
+    2. fatjar-spring-boot-starter-mybatis    : MyBatis-Plus+Druid+Flyway+分页/乐观锁
+    3. fatjar-spring-boot-starter-security   : Spring Security 基础（PasswordEncoder+jjwt）
+    4. fatjar-spring-boot-starter-biz-tenant : 多租户 TenantLineHandler（默认关闭）
+    5. fatjar-spring-boot-starter-redis      : Redis+Redisson 封装
+    6. fatjar-spring-boot-starter-mq         : RocketMQ 2.3.6 封装
+    7. fatjar-spring-boot-starter-task       : XXL-JOB 2.4.1 执行器
+  无业务编排，纯技术封装。通过 spring.factories / META-INF 自动装配。
+  ====================================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.workspace.fatjar</groupId>
+        <artifactId>fatjar-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>fatjar-framework</artifactId>
+    <packaging>pom</packaging>
+    <name>fatjar-framework</name>
+    <description>技术工具箱 - 聚合 7 个自定义 Spring Boot Starter</description>
+
+    <modules>
+        <module>fatjar-spring-boot-starter-web</module>
+        <module>fatjar-spring-boot-starter-mybatis</module>
+        <module>fatjar-spring-boot-starter-security</module>
+        <module>fatjar-spring-boot-starter-biz-tenant</module>
+        <module>fatjar-spring-boot-starter-redis</module>
+        <module>fatjar-spring-boot-starter-mq</module>
+        <module>fatjar-spring-boot-starter-task</module>
+    </modules>
+</project>
