@@ -12,7 +12,7 @@
 <mapper namespace="com.workspace.fatjar.auth.mapper.SysUserMapper">
 
     <!-- 通用结果映射（驼峰自动映射，显式声明便于维护） -->
-    <resultMap id="sysUserResultMap" type="com.workspace.fatjar.auth.entity.SysUser">
+    <resultMap id="sysUserResultMap" type="com.workspace.fatjar.auth.domain.SysUserDO">
         <id column="id" property="id"/>
         <result column="username" property="username"/>
         <result column="nickname" property="nickname"/>

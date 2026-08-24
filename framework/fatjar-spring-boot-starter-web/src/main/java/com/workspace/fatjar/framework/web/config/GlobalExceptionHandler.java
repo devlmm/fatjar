@@ -1,7 +1,7 @@
 package com.workspace.fatjar.framework.web.config;
 
 import com.workspace.fatjar.common.exception.BizException;
-import com.workspace.fatjar.common.exception.ErrorCode;
+import com.workspace.fatjar.common.result.CommonResultCode;
 import com.workspace.fatjar.common.result.R;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
                 .map(fe -> fe.getField() + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         log.warn("参数校验失败（Body）：{}", detail);
-        return fillTraceId(R.fail(ErrorCode.PARAM_INVALID, detail));
+        return fillTraceId(R.fail(CommonResultCode.PARAM_INVALID, detail));
     }
 
     /**
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         log.warn("参数绑定校验失败（Form）：{}", detail);
-        return fillTraceId(R.fail(ErrorCode.PARAM_INVALID, detail));
+        return fillTraceId(R.fail(CommonResultCode.PARAM_INVALID, detail));
     }
 
     /**
@@ -92,7 +92,7 @@ public class GlobalExceptionHandler {
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining("; "));
         log.warn("参数校验失败（Param）：{}", detail);
-        return fillTraceId(R.fail(ErrorCode.PARAM_INVALID, detail));
+        return fillTraceId(R.fail(CommonResultCode.PARAM_INVALID, detail));
     }
 
     /**
@@ -104,7 +104,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public R<Void> handleException(Exception e) {
         log.error("系统异常：", e);
-        return fillTraceId(R.fail(ErrorCode.SYSTEM_ERROR, e.getMessage()));
+        return fillTraceId(R.fail(CommonResultCode.SYSTEM_ERROR, e.getMessage()));
     }
 
     /**

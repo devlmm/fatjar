@@ -1,29 +1,28 @@
 package com.workspace.fatjar.bi.dto;
 
+import com.workspace.fatjar.common.dto.BaseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
-import java.io.Serializable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 报表 DTO（跨模块传递的报表基础信息）
  * <p>
  * 跨模块调用门面方法时返回，仅包含对外必要字段（不含内部审计字段 createBy/updateBy/deleted 等），
  * 避免数据库结构变更影响调用方。
+ * 主键 ID 继承自 {@link BaseDTO}。
  *
  * @author fatjar
  * @since 1.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "报表信息")
-public class BiReportDTO implements Serializable {
+public class BiReportDTO extends BaseDTO {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /** 报表 ID */
-    @Schema(description = "报表 ID", example = "1234567890")
-    private Long id;
 
     /** 报表名称 */
     @Schema(description = "报表名称", example = "月度销售汇总")

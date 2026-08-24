@@ -12,7 +12,7 @@
 <mapper namespace="com.workspace.fatjar.auth.mapper.SysRoleMapper">
 
     <!-- 角色结果映射 -->
-    <resultMap id="sysRoleResultMap" type="com.workspace.fatjar.auth.entity.SysRole">
+    <resultMap id="sysRoleResultMap" type="com.workspace.fatjar.auth.domain.SysRoleDO">
         <id column="id" property="id"/>
         <result column="role_code" property="roleCode"/>
         <result column="role_name" property="roleName"/>

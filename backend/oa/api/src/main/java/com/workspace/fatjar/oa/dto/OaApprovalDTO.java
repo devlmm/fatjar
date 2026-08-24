@@ -1,29 +1,28 @@
 package com.workspace.fatjar.oa.dto;
 
+import com.workspace.fatjar.common.dto.BaseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
-import java.io.Serializable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 审批 DTO（跨模块传递的审批基础信息）
  * <p>
  * 跨模块调用门面方法时返回，仅包含对外必要字段（不含 content/comment 等大文本/内部字段），
  * 避免数据库结构变更影响调用方。
+ * 主键 ID 继承自 {@link BaseDTO}。
  *
  * @author fatjar
  * @since 1.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "审批信息")
-public class OaApprovalDTO implements Serializable {
+public class OaApprovalDTO extends BaseDTO {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /** 审批 ID */
-    @Schema(description = "审批 ID", example = "1234567890")
-    private Long id;
 
     /** 审批标题 */
     @Schema(description = "审批标题", example = "差旅报销申请")

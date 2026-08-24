@@ -1,7 +1,7 @@
 package com.workspace.fatjar.fico.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.fico.entity.FicoVoucher;
+import com.workspace.fatjar.fico.domain.FicoVoucherDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,5 +17,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface FicoVoucherMapper extends BaseMapper<FicoVoucher> {
+public interface FicoVoucherMapper extends BaseMapper<FicoVoucherDO> {
 }

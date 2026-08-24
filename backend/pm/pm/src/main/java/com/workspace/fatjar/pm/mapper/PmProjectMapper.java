@@ -1,7 +1,7 @@
 package com.workspace.fatjar.pm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.pm.entity.PmProject;
+import com.workspace.fatjar.pm.domain.PmProjectDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,6 +17,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface PmProjectMapper extends BaseMapper<PmProject> {
+public interface PmProjectMapper extends BaseMapper<PmProjectDO> {
 
 }

@@ -1,15 +1,16 @@
 package com.workspace.fatjar.crm.dto;
 
+import com.workspace.fatjar.common.dto.BaseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
-import java.io.Serializable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 客户 DTO（跨模块传递的客户基础信息）
  * <p>
  * 仅包含对外必要字段（不含 createTime/updateTime/createBy/updateBy/deleted 等审计字段，
- * 亦不含 email 等非跨模块必需字段）。
+ * 亦不含 email 等非跨模块必需字段）。主键 ID 继承自 {@link BaseDTO}。
  * <p>
  * 字段含义：
  *   - level：客户等级（0=普通，1=VIP，2=战略）
@@ -19,15 +20,12 @@ import lombok.Data;
  * @since 1.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "客户信息")
-public class CrmCustomerDTO implements Serializable {
+public class CrmCustomerDTO extends BaseDTO {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /** 客户 ID */
-    @Schema(description = "客户 ID", example = "1234567890")
-    private Long id;
 
     /** 客户名称 */
     @Schema(description = "客户名称", example = "Workspace 科技")

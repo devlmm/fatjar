@@ -1,7 +1,7 @@
 package com.workspace.fatjar.crm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.crm.entity.CrmCustomer;
+import com.workspace.fatjar.crm.domain.CrmCustomerDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,6 +17,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface CrmCustomerMapper extends BaseMapper<CrmCustomer> {
+public interface CrmCustomerMapper extends BaseMapper<CrmCustomerDO> {
 
 }

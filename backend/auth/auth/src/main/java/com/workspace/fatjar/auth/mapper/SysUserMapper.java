@@ -1,7 +1,7 @@
 package com.workspace.fatjar.auth.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.auth.entity.SysUser;
+import com.workspace.fatjar.auth.domain.SysUserDO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -15,13 +15,13 @@ import org.apache.ibatis.annotations.Param;
  * @author fatjar
  * @since 1.0.0
  */
-public interface SysUserMapper extends BaseMapper<SysUser> {
+public interface SysUserMapper extends BaseMapper<SysUserDO> {
 
     /**
      * 根据用户名查询用户（登录场景使用）
      *
      * @param username 用户名（登录账号）
-     * @return 用户实体，不存在返回 null
+     * @return 用户数据对象，不存在返回 null
      */
-    SysUser selectByUsername(@Param("username") String username);
+    SysUserDO selectByUsername(@Param("username") String username);
 }

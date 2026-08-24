@@ -5,92 +5,120 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.workspace.fatjar.common.result.PageResult;
 import com.workspace.fatjar.oa.api.OaApprovalApi;
-import com.workspace.fatjar.oa.entity.OaApproval;
+import com.workspace.fatjar.oa.bo.OaApprovalBO;
+import com.workspace.fatjar.oa.convert.OaApprovalConverter;
+import com.workspace.fatjar.oa.domain.OaApprovalDO;
 import com.workspace.fatjar.oa.mapper.OaApprovalMapper;
-import com.workspace.fatjar.oa.ro.OaApprovalPageRO;
+import com.workspace.fatjar.oa.query.OaApprovalQuery;
 import com.workspace.fatjar.oa.service.OaApprovalService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * OA 审批 Service 实现
  * <p>
  * 设计说明：
- *   1. 继承 MyBatis-Plus ServiceImpl&lt;OaApprovalMapper, OaApproval&gt;，自动拥有 baseMapper 与 IService 全部方法
+ *   1. 继承 MyBatis-Plus ServiceImpl&lt;OaApprovalMapper, OaApprovalDO&gt;，自动拥有 baseMapper 与 IService 全部方法
  *   2. 同时 implements OaApprovalService + OaApprovalApi，一个实现满足「内部」与「门面」双契约
- *   3. 内部 CRUD：page（分页）/getById/save/update/removeById
- *   4. 门面方法：getApprovalTitle（跨模块调用，仅返回审批标题，避免暴露完整实体）
- *   5. 写操作（save/update/removeById）统一加 @Transactional(rollbackFor=Exception.class)
+ *   3. Controller 层调用 BO 系列方法（pageBO/getBOById/saveBO/updateBO/removeBOById），
+ *      BO 与 DO 通过 {@link OaApprovalConverter}（MapStruct）双向转换
+ *   4. 门面方法 getApprovalTitle 返回字符串，不暴露 DO，
+ *      且审批不存在时返回 null，调用方自行处理
  * <p>
- * 依赖注入：本类仅依赖继承的 baseMapper，无需额外构造器注入。
+ * 事务说明：本实现未覆盖默认 CRUD（save/update/removeById），其事务由父类 ServiceImpl 默认实现提供；
+ * 门面方法为只读查询，无需显式 @Transactional。
  *
  * @author fatjar
  * @since 1.0.0
  */
 @Slf4j
 @Service
-public class OaApprovalServiceImpl extends ServiceImpl<OaApprovalMapper, OaApproval> implements OaApprovalService, OaApprovalApi {
+@RequiredArgsConstructor
+public class OaApprovalServiceImpl extends ServiceImpl<OaApprovalMapper, OaApprovalDO>
+        implements OaApprovalService, OaApprovalApi {
+
+    /** MapStruct 转换器（Spring Bean，构造器注入） */
+    private final OaApprovalConverter converter;
 
     /**
-     * 分页查询审批
+     * 审批标题查询（跨模块门面方法）
      * <p>
-     * 查询条件：
-     *   - title：模糊匹配（LIKE）
-     *   - status：精确匹配（=）
-     * 排序：按 createTime 倒序（最新审批在前）
+     * 供其他业务模块在无需感知 oa 实现的前提下，根据审批 ID 获取审批标题，
+     * 常用于消息推送、待办关联、流程追溯等场景。
+     * 审批不存在或被逻辑删除时返回 null。
      *
-     * @param ro 分页查询请求
-     * @return 分页结果
+     * @param approvalId 审批 ID
+     * @return 审批标题；审批不存在时返回 null
      */
     @Override
-    public PageResult<OaApproval> page(OaApprovalPageRO ro) {
-        Page<OaApproval> page = new Page<>(ro.getCurrent(), ro.getSize());
-        LambdaQueryWrapper<OaApproval> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(ro.getTitle() != null && !ro.getTitle().isEmpty(),
-                OaApproval::getTitle, ro.getTitle());
-        wrapper.eq(ro.getStatus() != null, OaApproval::getStatus, ro.getStatus());
-        wrapper.orderByDesc(OaApproval::getCreateTime);
-        Page<OaApproval> result = page(page, wrapper);
-        return PageResult.of(result);
+    public String getApprovalTitle(Long approvalId) {
+        if (approvalId == null) {
+            return null;
+        }
+        OaApprovalDO doEntity = getById(approvalId);
+        return doEntity == null ? null : doEntity.getTitle();
     }
 
     /**
-     * 根据 ID 查询审批
+     * 分页查询审批（返回 BO 分页结果）
+     * <p>
+     * 支持审批标题模糊查询、状态精确查询，结果按创建时间倒序。
      *
-     * @param id 审批 ID
-     * @return 审批实体，不存在返回 null
+     * @param query 分页查询条件（title/status + current/size）
+     * @return BO 分页结果
      */
     @Override
-    public OaApproval getById(Long id) {
+    public PageResult<OaApprovalBO> pageBO(OaApprovalQuery query) {
+        Page<OaApprovalDO> page = new Page<>(query.getCurrent(), query.getSize());
+        LambdaQueryWrapper<OaApprovalDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StringUtils.hasText(query.getTitle()),
+                OaApprovalDO::getTitle, query.getTitle());
+        wrapper.eq(query.getStatus() != null, OaApprovalDO::getStatus, query.getStatus());
+        wrapper.orderByDesc(OaApprovalDO::getCreateTime);
+        Page<OaApprovalDO> result = page(page, wrapper);
+        // DO 列表转 BO 列表（先转 BO 再转分页结果）
+        return PageResult.of(result, converter::toBO);
+    }
+
+    /**
+     * 根据审批 ID 查询审批（返回 BO）
+     *
+     * @param id 审批 ID
+     * @return 审批 BO，审批不存在返回 null
+     */
+    @Override
+    public OaApprovalBO getBOById(Long id) {
         if (id == null) {
             return null;
         }
-        return super.getById(id);
+        OaApprovalDO doEntity = getById(id);
+        return doEntity == null ? null : converter.toBO(doEntity);
     }
 
     /**
-     * 新增审批
+     * 新增审批（BO 入参，经 MapStruct 转 DO 后持久化）
      *
-     * @param approval 审批实体
-     * @return true 表示新增成功
+     * @param bo 审批业务对象
+     * @return true 表示保存成功
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean save(OaApproval approval) {
-        return super.save(approval);
+    public boolean saveBO(OaApprovalBO bo) {
+        OaApprovalDO doEntity = converter.toDO(bo);
+        return save(doEntity);
     }
 
     /**
-     * 修改审批
+     * 修改审批（BO 入参，经 MapStruct 转 DO 后更新）
      *
-     * @param approval 审批实体
-     * @return true 表示修改成功
+     * @param bo 审批业务对象
+     * @return true 表示更新成功
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean update(OaApproval approval) {
-        return updateById(approval);
+    public boolean updateBO(OaApprovalBO bo) {
+        OaApprovalDO doEntity = converter.toDO(bo);
+        return updateById(doEntity);
     }
 
     /**
@@ -100,28 +128,7 @@ public class OaApprovalServiceImpl extends ServiceImpl<OaApprovalMapper, OaAppro
      * @return true 表示删除成功
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean removeById(Long id) {
-        if (id == null) {
-            return false;
-        }
-        return super.removeById(id);
-    }
-
-    /**
-     * 审批标题查询（门面方法，跨模块调用）
-     * <p>
-     * 供其他业务模块根据审批 ID 获取审批标题，常用于消息推送、待办关联场景。
-     *
-     * @param approvalId 审批 ID
-     * @return 审批标题；审批不存在返回 null
-     */
-    @Override
-    public String getApprovalTitle(Long approvalId) {
-        if (approvalId == null) {
-            return null;
-        }
-        OaApproval approval = getById(approvalId);
-        return approval == null ? null : approval.getTitle();
+    public boolean removeBOById(Long id) {
+        return removeById(id);
     }
 }

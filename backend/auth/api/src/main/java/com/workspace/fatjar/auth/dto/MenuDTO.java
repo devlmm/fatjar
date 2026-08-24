@@ -1,32 +1,30 @@
 package com.workspace.fatjar.auth.dto;
 
+import com.workspace.fatjar.common.dto.BaseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 菜单 DTO（用于前端渲染侧边栏与按钮权限）
  * <p>
  * 通过递归构建父子层级：顶级菜单 parentId=0，子菜单挂在父菜单的 children 列表中。
  * 字段对应数据库 sys_menu 表（除业务字段外，含 children 列表用于树形结构）。
+ * 主键 ID 继承自 {@link BaseDTO}。
  *
  * @author fatjar
  * @since 1.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "菜单")
-public class MenuDTO implements Serializable {
+public class MenuDTO extends BaseDTO {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /** 菜单 ID */
-    @Schema(description = "菜单 ID", example = "1")
-    private Long id;
 
     /** 父菜单 ID（顶级菜单 parentId=0） */
     @Schema(description = "父菜单 ID（顶级为 0）", example = "0")

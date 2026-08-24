@@ -1,7 +1,6 @@
 package com.workspace.fatjar.common.result;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.workspace.fatjar.common.exception.ErrorCode;
 import lombok.Data;
 
 import java.io.Serial;
@@ -15,7 +14,8 @@ import java.io.Serializable;
  * <p>
  * 使用示例：
  *   return R.ok(pageResult);
- *   return R.fail(ErrorCode.PARAM_INVALID, "商品名不能为空");
+ *   return R.fail(CommonResultCode.PARAM_INVALID, "商品名不能为空");
+ *   return R.fail(FicoResultCode.VOUCHER_NOT_FOUND);
  *
  * @param <T> 业务数据类型
  * @author fatjar
@@ -61,7 +61,7 @@ public class R<T> implements Serializable {
      * @return R 实例
      */
     public static <T> R<T> ok() {
-        return new R<>(ErrorCode.SUCCESS.getCode(), ErrorCode.SUCCESS.getMessage(), null);
+        return new R<>(CommonResultCode.SUCCESS.getCode(), CommonResultCode.SUCCESS.getMessage(), null);
     }
 
     /**
@@ -72,31 +72,31 @@ public class R<T> implements Serializable {
      * @return R 实例
      */
     public static <T> R<T> ok(T data) {
-        return new R<>(ErrorCode.SUCCESS.getCode(), ErrorCode.SUCCESS.getMessage(), data);
+        return new R<>(CommonResultCode.SUCCESS.getCode(), CommonResultCode.SUCCESS.getMessage(), data);
     }
 
     /**
-     * 失败返回（错误码枚举）
+     * 失败返回（结果码枚举）
      *
-     * @param errorCode 错误码枚举
-     * @param <T>       数据类型
+     * @param resultCode 结果码枚举（实现 ResultCode 接口）
+     * @param <T>        数据类型
      * @return R 实例
      */
-    public static <T> R<T> fail(ErrorCode errorCode) {
-        return new R<>(errorCode.getCode(), errorCode.getMessage(), null);
+    public static <T> R<T> fail(ResultCode resultCode) {
+        return new R<>(resultCode.getCode(), resultCode.getMessage(), null);
     }
 
     /**
-     * 失败返回（错误码 + 补充信息）
+     * 失败返回（结果码 + 补充信息）
      *
-     * @param errorCode 错误码枚举
-     * @param detail    补充信息
-     * @param <T>       数据类型
+     * @param resultCode 结果码枚举
+     * @param detail     补充信息
+     * @param <T>        数据类型
      * @return R 实例
      */
-    public static <T> R<T> fail(ErrorCode errorCode, String detail) {
-        String msg = errorCode.getMessage() + (detail == null ? "" : ": " + detail);
-        return new R<>(errorCode.getCode(), msg, null);
+    public static <T> R<T> fail(ResultCode resultCode, String detail) {
+        String msg = resultCode.getMessage() + (detail == null ? "" : ": " + detail);
+        return new R<>(resultCode.getCode(), msg, null);
     }
 
     /**
@@ -117,6 +117,6 @@ public class R<T> implements Serializable {
      * @return true 表示 code == 0
      */
     public boolean isSuccess() {
-        return this.code == ErrorCode.SUCCESS.getCode();
+        return this.code == CommonResultCode.SUCCESS.getCode();
     }
 }

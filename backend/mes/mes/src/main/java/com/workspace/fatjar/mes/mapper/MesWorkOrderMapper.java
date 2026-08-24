@@ -1,7 +1,7 @@
 package com.workspace.fatjar.mes.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.mes.entity.MesWorkOrder;
+import com.workspace.fatjar.mes.domain.MesWorkOrderDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,5 +17,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface MesWorkOrderMapper extends BaseMapper<MesWorkOrder> {
+public interface MesWorkOrderMapper extends BaseMapper<MesWorkOrderDO> {
 }

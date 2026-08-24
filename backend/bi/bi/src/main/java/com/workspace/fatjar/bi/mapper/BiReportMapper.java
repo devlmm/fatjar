@@ -1,7 +1,7 @@
 package com.workspace.fatjar.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.bi.entity.BiReport;
+import com.workspace.fatjar.bi.domain.BiReportDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -16,5 +16,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface BiReportMapper extends BaseMapper<BiReport> {
+public interface BiReportMapper extends BaseMapper<BiReportDO> {
 }

@@ -1,7 +1,7 @@
 package com.workspace.fatjar.oa.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.oa.entity.OaApproval;
+import com.workspace.fatjar.oa.domain.OaApprovalDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -16,5 +16,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface OaApprovalMapper extends BaseMapper<OaApproval> {
+public interface OaApprovalMapper extends BaseMapper<OaApprovalDO> {
 }

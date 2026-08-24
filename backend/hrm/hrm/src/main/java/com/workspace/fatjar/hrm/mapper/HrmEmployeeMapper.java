@@ -1,7 +1,7 @@
 package com.workspace.fatjar.hrm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.hrm.entity.HrmEmployee;
+import com.workspace.fatjar.hrm.domain.HrmEmployeeDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,6 +17,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface HrmEmployeeMapper extends BaseMapper<HrmEmployee> {
+public interface HrmEmployeeMapper extends BaseMapper<HrmEmployeeDO> {
 
 }

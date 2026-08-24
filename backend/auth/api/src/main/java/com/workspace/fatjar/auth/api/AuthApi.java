@@ -1,9 +1,9 @@
 package com.workspace.fatjar.auth.api;
 
+import com.workspace.fatjar.auth.dto.LoginDTO;
 import com.workspace.fatjar.auth.dto.LoginResultDTO;
 import com.workspace.fatjar.auth.dto.MenuDTO;
 import com.workspace.fatjar.auth.dto.UserDTO;
-import com.workspace.fatjar.auth.ro.LoginRO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
@@ -33,12 +33,12 @@ public interface AuthApi {
      *   4. 生成 JWT Token，将用户角色与权限集合缓存到 Redis
      *   5. 组装 LoginResultDTO 返回（含 Token、用户基础信息、角色、权限）
      *
-     * @param ro 登录请求对象（用户名、密码、验证码、验证码 key）
+     * @param dto 登录请求对象（用户名、密码、验证码、验证码 key）
      * @return 登录结果（Token + 用户信息 + 角色 + 权限）
      * @author fatjar
      * @since 1.0.0
      */
-    LoginResultDTO login(LoginRO ro);
+    LoginResultDTO login(LoginDTO dto);
 
     /**
      * 根据用户 ID 查询用户基础信息（跨模块调用入口）

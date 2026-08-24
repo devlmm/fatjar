@@ -1,15 +1,17 @@
 package com.workspace.fatjar.hrm.dto;
 
+import com.workspace.fatjar.common.dto.BaseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
-import java.io.Serializable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 员工 DTO（跨模块传递的员工基础信息）
  * <p>
  * 跨模块调用 HrmEmployeeApi.getEmployeeById 时返回，仅包含对外必要字段
  * （不含 createTime/updateTime/createBy/updateBy/deleted 等审计字段）。
+ * 主键 ID 继承自 {@link BaseDTO}。
  * <p>
  * 字段含义：
  *   - status：员工状态（0=在职，1=离职）
@@ -18,15 +20,12 @@ import lombok.Data;
  * @since 1.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "员工信息")
-public class HrmEmployeeDTO implements Serializable {
+public class HrmEmployeeDTO extends BaseDTO {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /** 员工 ID */
-    @Schema(description = "员工 ID", example = "1234567890")
-    private Long id;
 
     /** 工号 */
     @Schema(description = "工号", example = "EMP0001")

@@ -1,7 +1,7 @@
 package com.workspace.fatjar.auth.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.auth.entity.SysRoleMenu;
+import com.workspace.fatjar.auth.domain.SysRoleMenuDO;
 
 /**
  * 角色-菜单关联 Mapper 接口
@@ -14,5 +14,5 @@ import com.workspace.fatjar.auth.entity.SysRoleMenu;
  * @author fatjar
  * @since 1.0.0
  */
-public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenu> {
+public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenuDO> {
 }

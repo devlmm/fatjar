@@ -1,18 +1,20 @@
 package com.workspace.fatjar.oa.controller;
 
-import com.workspace.fatjar.common.exception.BizException;
-import com.workspace.fatjar.common.exception.ErrorCode;
 import com.workspace.fatjar.common.result.PageResult;
 import com.workspace.fatjar.common.result.R;
-import com.workspace.fatjar.oa.entity.OaApproval;
-import com.workspace.fatjar.oa.ro.OaApprovalPageRO;
+import com.workspace.fatjar.oa.bo.OaApprovalBO;
+import com.workspace.fatjar.oa.convert.OaApprovalConverter;
+import com.workspace.fatjar.oa.exception.OaBizException;
+import com.workspace.fatjar.oa.query.OaApprovalQuery;
+import com.workspace.fatjar.oa.resultcode.OaResultCode;
 import com.workspace.fatjar.oa.service.OaApprovalService;
+import com.workspace.fatjar.oa.vo.OaApprovalVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
  *   - DELETE /oa/approval/{id}   ：根据 ID 删除审批
  * <p>
  * 说明：Controller 仅暴露内部 CRUD，不暴露门面方法（门面方法供其他模块跨模块调用）。
+ * Controller 通过 {@link OaApprovalConverter} 将 Service 返回的 BO 转换为 VO 返回前端，
+ * 分页查询使用 {@link OaApprovalQuery} 接收条件。
  *
  * @author fatjar
  * @since 1.0.0
@@ -41,33 +45,30 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/oa/approval")
+@RequiredArgsConstructor
 @Tag(name = "办公自动化-审批管理", description = "OA 审批 CRUD")
 public class OaApprovalController {
 
     /** 审批 Service（内部视角，同时承担 OaApprovalApi 门面实现） */
     private final OaApprovalService oaApprovalService;
 
-    /**
-     * 构造器注入（@Autowired 显式声明）
-     *
-     * @param oaApprovalService 审批 Service
-     */
-    @Autowired
-    public OaApprovalController(OaApprovalService oaApprovalService) {
-        this.oaApprovalService = oaApprovalService;
-    }
+    /** MapStruct 转换器（BO -> VO） */
+    private final OaApprovalConverter converter;
 
     /**
      * 分页查询审批
      *
-     * @param ro 分页查询请求（含 current/size + title/status 过滤条件）
-     * @return 分页结果
+     * @param query 分页查询参数（current/size/title/status）
+     * @return 分页结果（VO 列表）
      */
     @Operation(summary = "分页查询审批", description = "支持标题模糊、状态精确查询")
     @GetMapping("/page")
-    public R<PageResult<OaApproval>> page(@Valid OaApprovalPageRO ro) {
-        PageResult<OaApproval> result = oaApprovalService.page(ro);
-        return R.ok(result);
+    public R<PageResult<OaApprovalVO>> page(@Valid OaApprovalQuery query) {
+        PageResult<OaApprovalBO> boPage = oaApprovalService.pageBO(query);
+        PageResult<OaApprovalVO> voPage = new PageResult<>(
+                boPage.getCurrent(), boPage.getSize(), boPage.getTotal(), boPage.getPages(),
+                converter.toVOList(boPage.getRecords()));
+        return R.ok(voPage);
     }
 
     /**
@@ -78,26 +79,26 @@ public class OaApprovalController {
      */
     @Operation(summary = "根据 ID 查询审批")
     @GetMapping("/{id}")
-    public R<OaApproval> get(@Parameter(description = "审批 ID") @PathVariable Long id) {
-        OaApproval approval = oaApprovalService.getById(id);
-        if (approval == null) {
-            throw new BizException(ErrorCode.DATA_NOT_FOUND);
+    public R<OaApprovalVO> get(@Parameter(description = "审批 ID") @PathVariable Long id) {
+        OaApprovalBO bo = oaApprovalService.getBOById(id);
+        if (bo == null) {
+            throw new OaBizException(OaResultCode.DATA_NOT_FOUND);
         }
-        return R.ok(approval);
+        return R.ok(converter.toVO(bo));
     }
 
     /**
      * 新增审批
      *
-     * @param approval 审批实体
+     * @param bo 审批业务对象
      * @return 操作结果
      */
     @Operation(summary = "新增审批")
     @PostMapping
-    public R<Void> save(@Parameter(description = "审批信息") @Valid @RequestBody OaApproval approval) {
-        boolean ok = oaApprovalService.save(approval);
+    public R<Void> save(@Parameter(description = "审批信息") @Valid @RequestBody OaApprovalBO bo) {
+        boolean ok = oaApprovalService.saveBO(bo);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new OaBizException(OaResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }
@@ -105,18 +106,19 @@ public class OaApprovalController {
     /**
      * 修改审批
      *
-     * @param approval 审批实体
+     * @param bo 审批业务对象（id 不能为空）
      * @return 操作结果
      */
     @Operation(summary = "修改审批")
     @PutMapping
-    public R<Void> update(@Parameter(description = "审批信息") @Valid @RequestBody OaApproval approval) {
-        if (approval.getId() == null) {
-            throw new BizException(ErrorCode.PARAM_INVALID, "审批 ID 不能为空");
+    public R<Void> update(@Parameter(description = "审批信息") @Valid @RequestBody OaApprovalBO bo) {
+        if (bo.getId() == null) {
+            throw new OaBizException(
+                    com.workspace.fatjar.common.result.CommonResultCode.PARAM_INVALID, "审批 ID 不能为空");
         }
-        boolean ok = oaApprovalService.update(approval);
+        boolean ok = oaApprovalService.updateBO(bo);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new OaBizException(OaResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }
@@ -130,9 +132,9 @@ public class OaApprovalController {
     @Operation(summary = "删除审批", description = "逻辑删除")
     @DeleteMapping("/{id}")
     public R<Void> delete(@Parameter(description = "审批 ID") @PathVariable Long id) {
-        boolean ok = oaApprovalService.removeById(id);
+        boolean ok = oaApprovalService.removeBOById(id);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new OaBizException(OaResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }

@@ -1,7 +1,7 @@
 package com.workspace.fatjar.scm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.scm.entity.ScmPurchaseOrder;
+import com.workspace.fatjar.scm.domain.ScmPurchaseOrderDO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -17,5 +17,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface ScmPurchaseOrderMapper extends BaseMapper<ScmPurchaseOrder> {
+public interface ScmPurchaseOrderMapper extends BaseMapper<ScmPurchaseOrderDO> {
 }

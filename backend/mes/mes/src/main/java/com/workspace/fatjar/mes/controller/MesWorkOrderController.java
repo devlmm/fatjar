@@ -1,20 +1,19 @@
 package com.workspace.fatjar.mes.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.workspace.fatjar.common.exception.BizException;
-import com.workspace.fatjar.common.exception.ErrorCode;
 import com.workspace.fatjar.common.result.PageResult;
 import com.workspace.fatjar.common.result.R;
-import com.workspace.fatjar.mes.entity.MesWorkOrder;
-import com.workspace.fatjar.mes.ro.MesWorkOrderPageRO;
+import com.workspace.fatjar.mes.bo.MesWorkOrderBO;
+import com.workspace.fatjar.mes.convert.MesWorkOrderConverter;
+import com.workspace.fatjar.mes.query.MesWorkOrderQuery;
+import com.workspace.fatjar.mes.resultcode.MesResultCode;
 import com.workspace.fatjar.mes.service.MesWorkOrderService;
+import com.workspace.fatjar.mes.vo.MesWorkOrderVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
  *   - DELETE /mes/work-order/{id}        ：根据 ID 删除工单（逻辑删除）
  * <p>
  * 说明：Controller 仅暴露内部 CRUD，门面方法（getWorkOrderById）由 MesWorkOrderApi
- * 跨模块调用，不在 Controller 重复暴露。
+ * 跨模块调用，不在 Controller 重复暴露。Controller 通过 {@link MesWorkOrderConverter} 将 Service
+ * 返回的 BO 转换为 VO 返回前端，分页查询使用 {@link MesWorkOrderQuery} 接收条件。
  *
  * @author fatjar
  * @since 1.0.0
@@ -44,41 +44,32 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/mes/work-order")
+@RequiredArgsConstructor
 @Tag(name = "制造执行系统模块-工单", description = "工单 CRUD")
 public class MesWorkOrderController {
 
-    /** 工单 Service（同时承担 MesWorkOrder 的 IService 能力） */
+    /** 工单 Service（同时承担 MesWorkOrderDO 的 IService 能力） */
     private final MesWorkOrderService mesWorkOrderService;
 
-    /**
-     * 构造器注入（@Autowired 标注构造器，显式声明依赖）
-     *
-     * @param mesWorkOrderService 工单 Service
-     */
-    @Autowired
-    public MesWorkOrderController(MesWorkOrderService mesWorkOrderService) {
-        this.mesWorkOrderService = mesWorkOrderService;
-    }
+    /** MapStruct 转换器（BO -> VO） */
+    private final MesWorkOrderConverter converter;
 
     /**
      * 分页查询工单
      * <p>
      * 支持工单编号模糊查询、状态精确查询，结果按创建时间倒序。
      *
-     * @param ro 分页查询参数（current/size/workOrderNo/status）
-     * @return 分页结果
+     * @param query 分页查询参数（current/size/workOrderNo/status）
+     * @return 分页结果（VO 列表）
      */
     @Operation(summary = "分页查询工单", description = "支持工单编号模糊、状态精确查询")
     @GetMapping("/page")
-    public R<PageResult<MesWorkOrder>> page(@Valid MesWorkOrderPageRO ro) {
-        Page<MesWorkOrder> page = new Page<>(ro.getCurrent(), ro.getSize());
-        LambdaQueryWrapper<MesWorkOrder> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(ro.getWorkOrderNo() != null && !ro.getWorkOrderNo().isEmpty(),
-                MesWorkOrder::getWorkOrderNo, ro.getWorkOrderNo());
-        wrapper.eq(ro.getStatus() != null, MesWorkOrder::getStatus, ro.getStatus());
-        wrapper.orderByDesc(MesWorkOrder::getCreateTime);
-        Page<MesWorkOrder> result = mesWorkOrderService.page(page, wrapper);
-        return R.ok(PageResult.of(result));
+    public R<PageResult<MesWorkOrderVO>> page(@Valid MesWorkOrderQuery query) {
+        PageResult<MesWorkOrderBO> boPage = mesWorkOrderService.pageBO(query);
+        PageResult<MesWorkOrderVO> voPage = new PageResult<>(
+                boPage.getCurrent(), boPage.getSize(), boPage.getTotal(), boPage.getPages(),
+                converter.toVOList(boPage.getRecords()));
+        return R.ok(voPage);
     }
 
     /**
@@ -89,26 +80,26 @@ public class MesWorkOrderController {
      */
     @Operation(summary = "根据 ID 查询工单")
     @GetMapping("/{id}")
-    public R<MesWorkOrder> get(@Parameter(description = "工单 ID") @PathVariable Long id) {
-        MesWorkOrder workOrder = mesWorkOrderService.getById(id);
-        if (workOrder == null) {
-            throw new BizException(ErrorCode.DATA_NOT_FOUND);
+    public R<MesWorkOrderVO> get(@Parameter(description = "工单 ID") @PathVariable Long id) {
+        MesWorkOrderBO bo = mesWorkOrderService.getBOById(id);
+        if (bo == null) {
+            throw new com.workspace.fatjar.mes.exception.MesBizException(MesResultCode.DATA_NOT_FOUND);
         }
-        return R.ok(workOrder);
+        return R.ok(converter.toVO(bo));
     }
 
     /**
      * 新增工单
      *
-     * @param workOrder 工单实体
+     * @param bo 工单业务对象
      * @return 操作结果
      */
     @Operation(summary = "新增工单")
     @PostMapping
-    public R<Void> save(@Parameter(description = "工单信息") @Valid @RequestBody MesWorkOrder workOrder) {
-        boolean ok = mesWorkOrderService.save(workOrder);
+    public R<Void> save(@Parameter(description = "工单信息") @Valid @RequestBody MesWorkOrderBO bo) {
+        boolean ok = mesWorkOrderService.saveBO(bo);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new com.workspace.fatjar.mes.exception.MesBizException(MesResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }
@@ -116,18 +107,19 @@ public class MesWorkOrderController {
     /**
      * 修改工单
      *
-     * @param workOrder 工单实体
+     * @param bo 工单业务对象
      * @return 操作结果
      */
     @Operation(summary = "修改工单")
     @PutMapping
-    public R<Void> update(@Parameter(description = "工单信息") @Valid @RequestBody MesWorkOrder workOrder) {
-        if (workOrder.getId() == null) {
-            throw new BizException(ErrorCode.PARAM_INVALID, "工单 ID 不能为空");
+    public R<Void> update(@Parameter(description = "工单信息") @Valid @RequestBody MesWorkOrderBO bo) {
+        if (bo.getId() == null) {
+            throw new com.workspace.fatjar.mes.exception.MesBizException(
+                    com.workspace.fatjar.common.result.CommonResultCode.PARAM_INVALID, "工单 ID 不能为空");
         }
-        boolean ok = mesWorkOrderService.updateById(workOrder);
+        boolean ok = mesWorkOrderService.updateBO(bo);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new com.workspace.fatjar.mes.exception.MesBizException(MesResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }
@@ -141,9 +133,9 @@ public class MesWorkOrderController {
     @Operation(summary = "删除工单", description = "逻辑删除")
     @DeleteMapping("/{id}")
     public R<Void> delete(@Parameter(description = "工单 ID") @PathVariable Long id) {
-        boolean ok = mesWorkOrderService.removeById(id);
+        boolean ok = mesWorkOrderService.removeBOById(id);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new com.workspace.fatjar.mes.exception.MesBizException(MesResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }

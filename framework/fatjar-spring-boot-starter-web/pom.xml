@@ -57,7 +57,7 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
 
-        <!-- 自研通用模块（R / BizException / ErrorCode / CommonConstants / UserContext） -->
+        <!-- 自研通用模块（R / BizException / ResultCode / CommonResultCode / CommonConstants / UserContext） -->
         <dependency>
             <groupId>com.workspace.fatjar</groupId>
             <artifactId>fatjar-common</artifactId>

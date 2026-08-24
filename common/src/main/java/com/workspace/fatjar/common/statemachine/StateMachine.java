@@ -1,7 +1,7 @@
 package com.workspace.fatjar.common.statemachine;
 
 import com.workspace.fatjar.common.exception.BizException;
-import com.workspace.fatjar.common.exception.ErrorCode;
+import com.workspace.fatjar.common.result.CommonResultCode;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -70,12 +70,12 @@ public class StateMachine<S extends Enum<S>, E extends Enum<E>> {
     public S fire(S current, E event) {
         Map<E, S> eventMap = transitions.get(current);
         if (eventMap == null) {
-            throw new BizException(ErrorCode.UNSUPPORTED_OPERATION,
+            throw new BizException(CommonResultCode.UNSUPPORTED_OPERATION,
                     "当前状态[" + current + "]不允许任何事件");
         }
         S next = eventMap.get(event);
         if (next == null) {
-            throw new BizException(ErrorCode.UNSUPPORTED_OPERATION,
+            throw new BizException(CommonResultCode.UNSUPPORTED_OPERATION,
                     "当前状态[" + current + "]不允许事件[" + event + "]");
         }
         return next;

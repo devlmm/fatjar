@@ -1,7 +1,7 @@
 package com.workspace.fatjar.auth.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.auth.entity.SysMenu;
+import com.workspace.fatjar.auth.domain.SysMenuDO;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Param;
  * @author fatjar
  * @since 1.0.0
  */
-public interface SysMenuMapper extends BaseMapper<SysMenu> {
+public interface SysMenuMapper extends BaseMapper<SysMenuDO> {
 
     /**
      * 根据用户 ID 查询其可访问的所有菜单（JOIN sys_role_menu + sys_user_role）
@@ -22,9 +22,9 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
      * 业务层根据该结果递归构建父子树形结构。
      *
      * @param userId 用户 ID
-     * @return 菜单列表，未关联返回空集合
+     * @return 菜单数据对象列表，未关联返回空集合
      */
-    List<SysMenu> selectMenusByUserId(@Param("userId") Long userId);
+    List<SysMenuDO> selectMenusByUserId(@Param("userId") Long userId);
 
     /**
      * 根据用户 ID 查询其所有权限标识集合（用于接口/按钮鉴权）

@@ -1,7 +1,7 @@
 package com.workspace.fatjar.auth.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.workspace.fatjar.auth.entity.SysUserRole;
+import com.workspace.fatjar.auth.domain.SysUserRoleDO;
 
 /**
  * 用户-角色关联 Mapper 接口
@@ -14,5 +14,5 @@ import com.workspace.fatjar.auth.entity.SysUserRole;
  * @author fatjar
  * @since 1.0.0
  */
-public interface SysUserRoleMapper extends BaseMapper<SysUserRole> {
+public interface SysUserRoleMapper extends BaseMapper<SysUserRoleDO> {
 }

@@ -1,20 +1,20 @@
 package com.workspace.fatjar.pm.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.workspace.fatjar.common.exception.BizException;
-import com.workspace.fatjar.common.exception.ErrorCode;
 import com.workspace.fatjar.common.result.PageResult;
 import com.workspace.fatjar.common.result.R;
-import com.workspace.fatjar.pm.entity.PmProject;
-import com.workspace.fatjar.pm.ro.PmProjectPageRO;
+import com.workspace.fatjar.pm.bo.PmProjectBO;
+import com.workspace.fatjar.pm.convert.PmProjectConverter;
+import com.workspace.fatjar.pm.exception.PmBizException;
+import com.workspace.fatjar.pm.query.PmProjectQuery;
+import com.workspace.fatjar.pm.resultcode.PmResultCode;
 import com.workspace.fatjar.pm.service.PmProjectService;
+import com.workspace.fatjar.pm.vo.PmProjectVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.RestController;
  * 说明：Controller 仅暴露内部 CRUD，门面方法（getProjectManagerName）
  * 由 PmProjectApi 承载，仅供跨模块调用，不在此暴露 HTTP 入口。
  * 新增项目时由 ServiceImpl 在事务内调用 HrmEmployeeApi 校验项目经理存在性。
+ * Controller 通过 {@link PmProjectConverter} 将 Service 返回的 BO 转换为 VO 返回前端，
+ * 分页查询使用 {@link PmProjectQuery} 接收条件。
  *
  * @author fatjar
  * @since 1.0.0
@@ -45,39 +47,30 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/pm/project")
+@RequiredArgsConstructor
 @Tag(name = "项目管理-项目管理", description = "项目 CRUD")
 public class PmProjectController {
 
     /** 项目 Service（内部契约，承载 IService CRUD 能力，含跨模块项目经理校验） */
     private final PmProjectService pmProjectService;
 
-    /**
-     * 构造器注入（推荐方式，便于单元测试与最终字段保证）
-     *
-     * @param pmProjectService 项目 Service
-     */
-    @Autowired
-    public PmProjectController(PmProjectService pmProjectService) {
-        this.pmProjectService = pmProjectService;
-    }
+    /** MapStruct 转换器（BO -> VO） */
+    private final PmProjectConverter converter;
 
     /**
      * 分页查询项目
      *
-     * @param ro 分页 + 过滤参数（current/size/projectName/status）
-     * @return 分页结果
+     * @param query 分页 + 过滤参数（current/size/projectName/status）
+     * @return 分页结果（VO 列表）
      */
     @Operation(summary = "分页查询项目", description = "支持名称模糊、状态精确查询")
     @GetMapping("/page")
-    public R<PageResult<PmProject>> page(@Valid PmProjectPageRO ro) {
-        Page<PmProject> page = new Page<>(ro.getCurrent(), ro.getSize());
-        LambdaQueryWrapper<PmProject> wrapper = new LambdaQueryWrapper<>();
-        wrapper.like(ro.getProjectName() != null && !ro.getProjectName().isEmpty(),
-                PmProject::getProjectName, ro.getProjectName());
-        wrapper.eq(ro.getStatus() != null, PmProject::getStatus, ro.getStatus());
-        wrapper.orderByDesc(PmProject::getCreateTime);
-        Page<PmProject> result = pmProjectService.page(page, wrapper);
-        return R.ok(PageResult.of(result));
+    public R<PageResult<PmProjectVO>> page(@Valid PmProjectQuery query) {
+        PageResult<PmProjectBO> boPage = pmProjectService.pageBO(query);
+        PageResult<PmProjectVO> voPage = new PageResult<>(
+                boPage.getCurrent(), boPage.getSize(), boPage.getTotal(), boPage.getPages(),
+                converter.toVOList(boPage.getRecords()));
+        return R.ok(voPage);
     }
 
     /**
@@ -88,29 +81,29 @@ public class PmProjectController {
      */
     @Operation(summary = "根据 ID 查询项目")
     @GetMapping("/{id}")
-    public R<PmProject> get(@Parameter(description = "项目 ID") @PathVariable Long id) {
-        PmProject project = pmProjectService.getById(id);
-        if (project == null) {
-            throw new BizException(ErrorCode.DATA_NOT_FOUND);
+    public R<PmProjectVO> get(@Parameter(description = "项目 ID") @PathVariable Long id) {
+        PmProjectBO bo = pmProjectService.getBOById(id);
+        if (bo == null) {
+            throw new PmBizException(PmResultCode.DATA_NOT_FOUND);
         }
-        return R.ok(project);
+        return R.ok(converter.toVO(bo));
     }
 
     /**
      * 新增项目
      * <p>
      * 内部由 ServiceImpl 在事务内调用 HrmEmployeeApi 校验项目经理存在性，
-     * 若项目经理不存在则抛 BizException(DATA_NOT_FOUND, "项目经理不存在")。
+     * 若项目经理不存在则抛 PmBizException(DATA_NOT_FOUND, "项目经理不存在")。
      *
-     * @param entity 项目实体
+     * @param bo 项目业务对象
      * @return 操作结果
      */
     @Operation(summary = "新增项目", description = "内部校验项目经理存在性（跨模块调用 HRM）")
     @PostMapping
-    public R<Void> save(@Parameter(description = "项目信息") @Valid @RequestBody PmProject entity) {
-        boolean ok = pmProjectService.save(entity);
+    public R<Void> save(@Parameter(description = "项目信息") @Valid @RequestBody PmProjectBO bo) {
+        boolean ok = pmProjectService.saveBO(bo);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new PmBizException(PmResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }
@@ -118,18 +111,19 @@ public class PmProjectController {
     /**
      * 修改项目
      *
-     * @param entity 项目实体（id 不能为空）
+     * @param bo 项目业务对象（id 不能为空）
      * @return 操作结果
      */
     @Operation(summary = "修改项目")
     @PutMapping
-    public R<Void> update(@Parameter(description = "项目信息") @Valid @RequestBody PmProject entity) {
-        if (entity.getId() == null) {
-            throw new BizException(ErrorCode.PARAM_INVALID, "项目 ID 不能为空");
+    public R<Void> update(@Parameter(description = "项目信息") @Valid @RequestBody PmProjectBO bo) {
+        if (bo.getId() == null) {
+            throw new PmBizException(
+                    com.workspace.fatjar.common.result.CommonResultCode.PARAM_INVALID, "项目 ID 不能为空");
         }
-        boolean ok = pmProjectService.updateById(entity);
+        boolean ok = pmProjectService.updateBO(bo);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new PmBizException(PmResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }
@@ -143,9 +137,9 @@ public class PmProjectController {
     @Operation(summary = "删除项目", description = "逻辑删除")
     @DeleteMapping("/{id}")
     public R<Void> delete(@Parameter(description = "项目 ID") @PathVariable Long id) {
-        boolean ok = pmProjectService.removeById(id);
+        boolean ok = pmProjectService.removeBOById(id);
         if (!ok) {
-            throw new BizException(ErrorCode.OPERATION_FAILED);
+            throw new PmBizException(PmResultCode.OPERATION_FAILED);
         }
         return R.ok();
     }

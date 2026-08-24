@@ -1,16 +1,16 @@
 package com.workspace.fatjar.auth.controller;
 
+import com.workspace.fatjar.auth.dto.LoginDTO;
 import com.workspace.fatjar.auth.dto.LoginResultDTO;
 import com.workspace.fatjar.auth.dto.MenuDTO;
+import com.workspace.fatjar.auth.dto.RegisterDTO;
 import com.workspace.fatjar.auth.dto.UserDTO;
-import com.workspace.fatjar.auth.ro.LoginRO;
-import com.workspace.fatjar.auth.ro.RegisterRO;
+import com.workspace.fatjar.auth.exception.AuthBizException;
+import com.workspace.fatjar.auth.resultcode.AuthResultCode;
 import com.workspace.fatjar.auth.service.AuthService;
 import com.workspace.fatjar.common.constant.CommonConstants;
 import com.workspace.fatjar.common.context.UserContext;
 import com.workspace.fatjar.common.context.UserContextHolder;
-import com.workspace.fatjar.common.exception.BizException;
-import com.workspace.fatjar.common.exception.ErrorCode;
 import com.workspace.fatjar.common.result.R;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -87,13 +87,13 @@ public class AuthController {
     /**
      * 用户登录
      *
-     * @param ro 登录请求（用户名/密码/验证码/验证码 key）
+     * @param dto 登录请求（用户名/密码/验证码/验证码 key）
      * @return 登录结果（Token + 用户信息 + 角色 + 权限）
      */
     @Operation(summary = "用户登录", description = "账号 + 密码 + 验证码登录，返回 Token")
     @PostMapping("/login")
-    public R<LoginResultDTO> login(@Parameter(description = "登录请求") @Valid @RequestBody LoginRO ro) {
-        LoginResultDTO result = authService.login(ro);
+    public R<LoginResultDTO> login(@Parameter(description = "登录请求") @Valid @RequestBody LoginDTO dto) {
+        LoginResultDTO result = authService.login(dto);
         return R.ok(result);
     }
 
@@ -136,7 +136,7 @@ public class AuthController {
         Long userId = UserContextHolder.currentUserId();
         UserDTO dto = authService.getUserById(userId);
         if (dto == null) {
-            throw new BizException(ErrorCode.UNAUTHORIZED, "用户上下文已失效，请重新登录");
+            throw new AuthBizException(AuthResultCode.UNAUTHORIZED, "用户上下文已失效，请重新登录");
         }
         return R.ok(dto);
     }
@@ -241,16 +241,16 @@ public class AuthController {
     /**
      * 用户自助注册（前端 /register 页调用）
      * <p>
-     * 业务规则见 AuthService.register，这里做一层 JSR303 校验（@Valid RegisterRO）。
+     * 业务规则见 AuthService.register，这里做一层 JSR303 校验（@Valid RegisterDTO）。
      * 注册成功返回 code=200，前端跳转至 /login。
      *
-     * @param ro 注册请求（username + password）
+     * @param dto 注册请求（username + password）
      * @return 空 R（仅 code / msg 指示成功与否）
      */
     @Operation(summary = "用户自助注册", description = "创建新账号；用户名 3-32、密码 6-64；默认启用、默认租户、无角色（管理员后续分配）")
     @PostMapping("/register")
-    public R<Void> register(@Parameter(description = "注册请求") @Valid @RequestBody RegisterRO ro) {
-        authService.register(ro);
+    public R<Void> register(@Parameter(description = "注册请求") @Valid @RequestBody RegisterDTO dto) {
+        authService.register(dto);
         return R.ok();
     }
 }
