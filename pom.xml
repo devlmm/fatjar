@@ -13,7 +13,7 @@
       ├── fatjar-framework (聚合 7 个自定义 Starter)
       ├── fatjar-common
       ├── fatjar-generator
-      ├── fatjar-backend (聚合 5 个业务根 auth/erp/oa/crm/ems)
+      ├── fatjar-backend (聚合 9 个业务根 auth/bi/crm/fi/hrm/mes/oa/pm/scm)
       ├── fatjar-startup
       ├── fatjar-frontend (聚合 website / admin-vue3 / uniapp)
       └── fatjar-deployment (资源目录，非 Maven 模块)
@@ -40,7 +40,7 @@
         <module>framework</module>          <!-- 技术工具箱：7 个自定义 Starter -->
         <module>common</module>             <!-- 通用工具/异常/枚举/雪花ID/状态机 -->
         <module>generator</module>          <!-- 代码生成器 -->
-        <module>backend</module>            <!-- 业务父：5 个业务根 (auth/erp/oa/crm/ems) -->
+        <module>backend</module>            <!-- 业务父：9 个业务根 (auth/bi/crm/fi/hrm/mes/oa/pm/scm) -->
         <module>startup</module>            <!-- 启动入口 -->
         <module>frontend</module>           <!-- 前端聚合：website/admin-vue3/uniapp -->
     </modules>

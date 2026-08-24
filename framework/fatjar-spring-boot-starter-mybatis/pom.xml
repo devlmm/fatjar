@@ -34,6 +34,23 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
+        <!--
+          强制锁定 Spring Boot 3.2.x 兼容的 MyBatis 版本（显式依赖覆盖 mybatis-plus-boot-starter
+          传递进来的 2.x 旧版 mybatis-spring:2.1.2，该旧版会在 Spring 6.1.x 下抛出：
+          IllegalArgumentException: Invalid value type for attribute 'factoryBeanObjectType': java.lang.String
+          根因：mybatis-spring < 3.0.3 把 factoryBeanObjectType 属性写成 String，
+                而 Spring Framework 6.1 在 FactoryBeanRegistrySupport 中强制要求为 Class 类型。
+        -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>3.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.5.16</version>
+        </dependency>
         <!-- jsqlparser 独立子包（MP 3.5.5 起拆分，分页/多租户 SQL 解析依赖） -->
         <dependency>
             <groupId>com.baomidou</groupId>

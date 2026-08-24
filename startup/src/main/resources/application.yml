@@ -11,6 +11,13 @@ server:
       force: true
 
 spring:
+  # 默认激活 DEV 环境，保证 IDE 直接 Run FatjarApplication 时：
+  #   1) 自动加载 application-dev.yml（MySQL: localhost:3306, Redis: localhost:6379 等配置）
+  #   2) logback-spring.xml 的 <springProfile name="dev"> 块生效（CONSOLE + FILE 双输出）
+  # 如需切换：Run Configuration → Program arguments 加 --spring.profiles.active=sit/prd
+  #          或 Nacos 配置中心、启动参数 -Dspring.profiles.active=xxx 都会覆盖此项
+  profiles:
+    active: dev
   jackson:
     # 全局 JSON 序列化：驼峰命名 + 时区
     date-format: yyyy-MM-dd HH:mm:ss

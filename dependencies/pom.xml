@@ -35,6 +35,16 @@
         <!-- ============ 数据层 ============ -->
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <mybatis-plus-jsqlparser.version>3.5.9</mybatis-plus-jsqlparser.version>
+        <!--
+          MyBatis 核心依赖：Spring Boot 3.2.x 强制要求 mybatis-spring >= 3.0.3，
+          因为 Spring Framework 6.1 对 BeanDefinition.getAttribute("factoryBeanObjectType")
+          做了严格类型校验（必须是 Class，不能是 String）。
+          旧版 mybatis-spring:2.x 与 Spring 6 完全不兼容，会抛：
+          IllegalArgumentException: Invalid value type for attribute 'factoryBeanObjectType': java.lang.String
+        -->
+        <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version>
+        <mybatis-spring.version>3.0.4</mybatis-spring.version>
+        <mybatis.version>3.5.16</mybatis.version>
         <druid.version>1.2.22</druid.version>
         <mysql.version>8.0.33</mysql.version>
         <flyway.version>9.22.3</flyway.version>
@@ -234,6 +244,29 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!--
+              ============ MyBatis 核心（必须放在 mybatis-plus 之前，用于覆盖其传递的 2.x 旧版本） ============
+              Spring Boot 3.2.x / Spring 6.1.x 需要 mybatis-spring >= 3.0.3（修复 factoryBeanObjectType 类型）。
+              mybatis-plus-boot-starter:3.5.5 的传递依赖可能错误解析到 mybatis-spring:2.1.2（Spring 5 时代），
+              导致 IllegalArgumentException: Invalid value type for attribute 'factoryBeanObjectType': java.lang.String。
+              此处强制 Spring Boot 3.x 兼容的三件套版本。
+            -->
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis-spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-spring</artifactId>
+                <version>${mybatis-spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>${mybatis.version}</version>
             </dependency>
 
             <!-- ============ MyBatis-Plus（核心 + 扩展，不含 jsqlparser 子包） ============ -->

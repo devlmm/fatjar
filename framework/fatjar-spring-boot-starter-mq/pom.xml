@@ -30,6 +30,15 @@
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <exclusions>
+                <!-- 排除 commons-logging，避免与 Spring 自带的 spring-jcl 产生冲突（启动时 warning）；
+                     Spring 的 spring-jcl 已兼容 commons-logging API，无需额外引入 commons-logging.jar。
+                     冲突来源传递链：rocketmq-acl → commons-validator → commons-logging:1.2 -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- 自研通用模块 -->

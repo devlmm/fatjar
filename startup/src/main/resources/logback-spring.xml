@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ====================================================================================
-  logback-spring.xml - 日志配置
-  ------------------------------------------------------------------------------------
-  特性：
+  日志配置文件 logback-spring.xml
+  功能：
     1. 控制台彩色输出（开发友好）
     2. 按环境差异化：dev=DEBUG，sit=INFO，prd=WARN（springProfile 标签）
     3. 输出 traceId（由 TraceIdFilter 注入 MDC），便于全链路追踪
     4. 文件滚动：按天 + 100MB 切割，保留 30 天
-  ====================================================================================
+    5. 兜底默认 root：无论是否激活 profile，启动阶段异常都能输出到控制台，
+       便于快速定位数据库/注册中心/缓存连接失败等启动失败原因
 -->
 <configuration>
     <!-- 应用名 -->
@@ -39,7 +38,17 @@
         </encoder>
     </appender>
 
-    <!-- DEV 环境：DEBUG + 控制台 -->
+    <!--
+      兜底默认 root（无任何 springProfile 激活时生效）
+      作用：即便忘记在启动参数中设置 spring.profiles.active（可选值 dev/sit/prd），
+      启动阶段的异常堆栈也会打印到控制台，避免吞掉真正的启动失败原因。
+      激活 profile 时，对应 springProfile 块内的 <root> 会覆盖此默认配置。
+    -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- DEV 环境：DEBUG + 控制台 + 文件 -->
     <springProfile name="dev">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
