@@ -6,25 +6,25 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://192.168.3.100:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: root
     type: com.alibaba.druid.pool.DruidDataSource
   data:
     redis:
-      host: localhost
+      host: 192.168.3.100
       port: 6379
 
 # RocketMQ（DEV 本地，未安装可不配置）
 rocketmq:
-  name-server: localhost:9876
+  name-server: 192.168.3.100:9876
 
 # XXL-JOB 执行器（DEV）
 xxl:
   job:
     enabled: true
     admin:
-      addresses: http://localhost:8085/xxl-job-admin
+      addresses: http://192.168.3.100:8085/xxl-job-admin
     executor:
       appname: fatjar-executor
       port: 9999
@@ -34,3 +34,10 @@ logging:
   level:
     root: INFO
     com.workspace.fatjar: DEBUG
+
+# Nacos 配置中心（com.alibaba.boot）— DEV 命名空间与拉取的 data-ids
+# 与 nacos-init.sh 上传到 fatjar-dev 命名空间的 DataId 一致
+nacos:
+  config:
+    namespace: fatjar-dev
+    data-ids: application-common.yml,application-dev.yml

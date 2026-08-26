@@ -7,6 +7,8 @@
 ```
 website/
 ├── pom.xml         # Maven 占位 POM（不参与编译）
+├── package.json    # npm 脚本入口（仅 serve/dev，无依赖）
+├── serve.js        # Node.js 内置静态服务器（零依赖）
 ├── index.html      # 单页官网首页
 ├── css/
 │   └── style.css   # 全局样式表
@@ -17,9 +19,28 @@ website/
 
 ## 快速启动
 
-### 方式一：Python 内置 HTTP 服务（推荐，无需安装任何依赖）
+### 方式一：Node.js 内置静态服务器（推荐，零依赖）
 
-> 适合本地预览，仅 Python 3 自带 `http.server` 模块
+> 项目自带 `serve.js`，基于 Node.js 内置 `http` 模块，无需任何 npm 包
+> 前端项目已依赖 Node.js（admin-vue3 / uniapp 同样需要），无需额外安装
+
+```bash
+# 进入 website 目录
+cd frontend/website
+
+# 启动静态服务器，监听 8090 端口
+node serve.js
+# 或等价命令
+npm run serve
+```
+
+浏览器访问：<http://localhost:8090>
+
+IDEA 用户：右上角运行配置下拉框选择 `website: serve`，点绿色三角 ▶ 一键启动。
+
+### 方式二：Python 内置 HTTP 服务（备选，需 Python 3）
+
+> 适合已装 Python 3 的环境，使用自带 `http.server` 模块
 
 ```bash
 # 进入 website 目录
@@ -30,19 +51,6 @@ python -m http.server 8090
 ```
 
 浏览器访问：<http://localhost:8090>
-
-### 方式二：Node.js http-server
-
-```bash
-# 全局安装 http-server（只需一次）
-npm install -g http-server
-
-# 进入 website 目录
-cd frontend/website
-
-# 启动服务
-http-server -p 8090
-```
 
 ### 方式三：Nginx 静态托管（生产环境）
 

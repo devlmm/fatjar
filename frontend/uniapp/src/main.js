@@ -9,6 +9,8 @@
 
 import { createSSRApp } from 'vue'
 import App from './App.vue'
+// 注册路由登录拦截器（副作用 import：执行 uni.addInterceptor 注册全局路由守卫）
+import './utils/permission.js'
 
 export function createApp() {
   const app = createSSRApp(App)

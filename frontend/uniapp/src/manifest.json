@@ -40,7 +40,7 @@
   "h5": {
     "router": {
       "mode": "hash",
-      "base": "./"
+      "base": "/"
     },
     "devServer": {
       "port": 9000,

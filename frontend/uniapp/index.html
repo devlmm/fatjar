@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================================
+  fatjar uniapp - H5 端入口模板 index.html
+  ====================================================================================
+  说明：
+    1. vite + vite-plugin-uni 要求项目根存在 index.html 作为 H5 入口
+    2. 编译时 vite-plugin-uni 会替换 [preload-links] 与 [app-context] 占位符
+       （占位符语法为 HTML 注释形式，写在文件下方 head 与 body 内）
+    3. #app 节点内的 [app-html] 占位符在 SSR 模式下被服务端渲染内容替换
+       （H5 端运行时由 vue 接管）
+    4. /src/main.js 是 vue3 应用入口（createSSRApp）
+  ====================================================================================
+-->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // 视口配置：禁用缩放，适配移动端
+      var coverSupport = 'CSS' in window && typeof CSS.supports === 'function' && (CSS.supports('top: env(a)') || CSS.supports('top: constant(a)'))
+      document.write('<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no' + (coverSupport ? ', viewport-fit=cover' : '') + '" />')
+    </script>
+    <title>fatjar</title>
+    <!--preload-links-->
+    <!--app-context-->
+  </head>
+  <body>
+    <div id="app"><!--app-html--></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

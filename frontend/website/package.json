@@ -1,0 +1,10 @@
+{
+  "name": "fatjar-frontend-website",
+  "version": "1.0.0",
+  "description": "fatjar 企业云原生大单体业务管理系统 - HTML5 静态官网",
+  "private": true,
+  "scripts": {
+    "dev": "node serve.js",
+    "serve": "node serve.js"
+  }
+}

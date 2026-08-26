@@ -15,7 +15,15 @@ export default {
   onLaunch: function () {
     // 应用启动时打印日志（生产环境会被去除）
     console.log('fatjar uniapp 启动')
-    // 此处可处理：检查更新、读取本地登录态、初始化推送等
+    // 启动时检查登录态：未登录直接跳登录页
+    // uni.addInterceptor（permission.js）只拦截主动路由跳转，应用首次进入首页不走拦截器，需在此兜底
+    try {
+      if (!uni.getStorageSync('fatjar_token')) {
+        uni.reLaunch({ url: '/pages/login/login' })
+      }
+    } catch (e) {
+      uni.reLaunch({ url: '/pages/login/login' })
+    }
   },
   onShow: function () {
     console.log('应用进入前台')

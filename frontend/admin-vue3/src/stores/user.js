@@ -46,15 +46,15 @@ export const useUserStore = defineStore('user', {
     async login(payload) {
       // 调用后端登录接口（/api 前缀由 axios baseURL 处理）
       const res = await request.post('/auth/login', payload)
-      // 假设后端返回结构：{ code: 200, data: { token: 'xxx', ... } }
-      if (res.code === 200) {
+      // 后端返回结构：{ code: 0, message: '成功', data: { token: 'xxx', ... } }
+      if (res.code === 0) {
         this.token = res.data.token
         // 持久化到 localStorage
         localStorage.setItem('fatjar_token', this.token)
         return res
       }
       // 业务异常：抛错让调用方处理（ElMessage）
-      throw new Error(res.msg || '登录失败')
+      throw new Error(res.message || '登录失败')
     },
 
     /**
@@ -64,7 +64,7 @@ export const useUserStore = defineStore('user', {
       if (!this.token) return
       // 主路径 /auth/userInfo（AuthController 已增加 /auth/info 别名兜底，避免版本不一致时 404）
       const res = await request.get('/auth/userInfo')
-      if (res.code === 200) {
+      if (res.code === 0) {
         this.userInfo = res.data
         localStorage.setItem('fatjar_user_info', JSON.stringify(this.userInfo))
       }

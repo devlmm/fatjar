@@ -63,6 +63,21 @@ function request(options) {
       success: (res) => {
         // HTTP 状态码非 2xx
         if (res.statusCode < 200 || res.statusCode >= 300) {
+          // 401 未认证 / 403 无权限：清空登录态跳登录页
+          // （后端 RestAuthenticationEntryPoint/RestAccessDeniedHandler 返回 401/403 + R body）
+          if (res.statusCode === 401 || res.statusCode === 403) {
+            setToken('')
+            uni.removeStorageSync('fatjar_user_info')
+            uni.showToast({
+              title: res.statusCode === 401 ? '登录已过期' : '没有权限，请重新登录',
+              icon: 'none',
+            })
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/login/login' })
+            }, 1000)
+            reject(new Error(res.statusCode === 401 ? '未授权' : '无权限'))
+            return
+          }
           if (!hideError) {
             uni.showToast({ title: `网络错误 ${res.statusCode}`, icon: 'none' })
           }
@@ -70,8 +85,8 @@ function request(options) {
           return
         }
         const body = res.data || {}
-        // 业务码 401：未授权，跳登录
-        if (body.code === 401) {
+        // 业务码 10002：未授权（后端 CommonResultCode.UNAUTHORIZED），跳登录
+        if (body.code === 10002) {
           setToken('')
           uni.showToast({ title: '登录已过期', icon: 'none' })
           setTimeout(() => {
@@ -80,12 +95,12 @@ function request(options) {
           reject(new Error('未授权'))
           return
         }
-        // 业务码非 200：弹窗提示
-        if (body.code !== 200) {
+        // 业务码非 0：弹窗提示（后端 R 约定 code==0 成功，字段名 message）
+        if (body.code !== 0) {
           if (!hideError) {
-            uni.showToast({ title: body.msg || '请求失败', icon: 'none' })
+            uni.showToast({ title: body.message || '请求失败', icon: 'none' })
           }
-          reject(new Error(body.msg || '请求失败'))
+          reject(new Error(body.message || '请求失败'))
           return
         }
         // 成功：返回业务数据

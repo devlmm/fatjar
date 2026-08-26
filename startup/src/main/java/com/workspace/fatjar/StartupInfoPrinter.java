@@ -137,11 +137,13 @@ public class StartupInfoPrinter implements ApplicationRunner {
      * @return server-addr (namespace: xxx) 形式串
      */
     private String nacosInfo() {
-        String addr = env.getProperty("spring.cloud.nacos.server-addr");
+        // com.alibaba.boot:nacos-config-spring-boot-starter 读 nacos.config.* 前缀
+        // （非 spring.cloud.nacos.* ——后者是 Spring Cloud Alibaba，本工程未引入）
+        String addr = env.getProperty("nacos.config.server-addr");
         if (addr == null || addr.isBlank()) {
             return "未配置";
         }
-        String ns = env.getProperty("spring.cloud.nacos.config.namespace");
+        String ns = env.getProperty("nacos.config.namespace");
         return addr + (ns == null || ns.isBlank() ? "" : " (namespace: " + ns + ")");
     }
 

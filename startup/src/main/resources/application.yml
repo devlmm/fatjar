@@ -11,6 +11,13 @@ server:
       force: true
 
 spring:
+  # MVC 配置：找不到 handler 抛 NoHandlerFoundException，交由 GlobalExceptionHandler 统一处理 404
+  # 注意：不关闭 spring.web.resources.add-mappings，以保留 webjars/knife4j 静态资源服务
+  mvc:
+    throw-exception-if-no-handler-found: true
+  application:
+    # 应用名（原在 bootstrap.yml，Spring Boot 3 不加载 bootstrap.yml，迁至此）
+    name: fatjar
   # 默认激活 DEV 环境，保证 IDE 直接 Run FatjarApplication 时：
   #   1) 自动加载 application-dev.yml（MySQL: localhost:3306, Redis: localhost:6379 等配置）
   #   2) logback-spring.xml 的 <springProfile name="dev"> 块生效（CONSOLE + FILE 双输出）
@@ -23,6 +30,31 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
     default-property-inclusion: non_null
+
+# Nacos 配置中心（com.alibaba.boot:nacos-config-spring-boot-starter）
+# Spring Boot 3 不加载 bootstrap.yml，故 Nacos 引导配置置于 application.yml
+# NacosConfigEnvironmentProcessor（spring.factories 注册的 EnvironmentPostProcessor）
+# 在 bean 创建前加载远程配置，确保 DataSource/Redis 可被 Nacos 覆盖
+nacos:
+  config:
+    # Nacos 服务地址：DEV 默认指向 192.168.3.100:8848；SIT/PRD 用 NACOS_ADDR 环境变量覆盖
+    server-addr: ${NACOS_ADDR:192.168.3.100:8848}
+    # 配置分组（与 nacos-init.sh 的 FATJAR_GROUP 一致）
+    group: FATJAR_GROUP
+    # 配置文件类型
+    type: yaml
+    # 启用自动刷新
+    auto-refresh: true
+    # remote-first=false：远程配置作为低优先级补充，本地 application-{env}.yml 主导
+    # 原因：com.alibaba.boot 多 data-id（application-common.yml + application-{env}.yml）的
+    #   装配顺序涉及 Collections.reverse，静态难断言谁覆盖谁；DEV 本地已有可用地址，
+    #   先让本地主导确保零环境变量启动。需 Nacos 全权主导时改 true（并按实测补 MYSQL_HOST 等）
+    remote-first: false
+    # 命名空间与 data-ids 按 profile 在 application-{env}.yml 中指定
+    bootstrap:
+      # 启用早期加载（EnvironmentPostProcessor 阶段），bean 创建前远程配置就位
+      enable: true
+      log-enable: true
 
 # MyBatis-Plus 配置（Nacos application-common.yml 会覆盖此项）
 mybatis-plus:

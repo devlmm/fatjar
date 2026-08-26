@@ -17,12 +17,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *   1. 配置 SecurityFilterChain：禁用 CSRF、无状态会话、定义授权规则、注入 JWT 过滤器
  *   2. 放行登录接口与 API 文档入口；其余接口必须认证
  *   3. 在 UsernamePasswordAuthenticationFilter 之前注入 JwtAuthenticationFilter
+ *   4. 配置异常处理：未认证/无权限统一返回 R 格式 JSON（避免 Spring Security 默认白页）
  * <p>
  * 重要约定：
  *   - PasswordEncoder Bean 由 fatjar-spring-boot-starter-security 的 SecurityBaseConfig 注册，
  *     本类不重复注册以避免重复 Bean 启动失败；业务层（如 AuthServiceImpl）直接 @Autowired 使用即可
  *   - JwtAuthenticationFilter 标注 @Component 后会被 Spring Boot 自动注册到 servlet 容器，
  *     为避免与 Spring Security 内部链重复执行，通过 FilterRegistrationBean 显式禁用 servlet 注册
+ *   - RestAuthenticationEntryPoint / RestAccessDeniedHandler 同为 @Component，构造器注入
  *
  * @author fatjar
  * @since 1.0.0
@@ -33,17 +35,27 @@ public class SecurityConfig {
 
     /** JWT 鉴权过滤器（由 Spring 容器注入，标注 @Component） */
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    /** 未认证处理器（未登录访问需认证接口时返回 401 + R JSON） */
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+    /** 访问拒绝处理器（已登录但无权限时返回 403 + R JSON） */
+    private final RestAccessDeniedHandler accessDeniedHandler;
 
     /**
-     * 构造器注入 JWT 过滤器
+     * 构造器注入 JWT 过滤器与异常处理器
      * <p>
      * 注意：PasswordEncoder Bean 由 starter-security 的 SecurityBaseConfig 注册，
      * 此处无需重复声明，业务层直接通过 @Autowired PasswordEncoder 使用即可。
      *
      * @param jwtAuthenticationFilter JWT 鉴权过滤器
+     * @param authenticationEntryPoint 未认证处理器
+     * @param accessDeniedHandler     访问拒绝处理器
      */
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                           RestAuthenticationEntryPoint authenticationEntryPoint,
+                           RestAccessDeniedHandler accessDeniedHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     /**
@@ -53,6 +65,7 @@ public class SecurityConfig {
      *   - CSRF：禁用（前后端分离 + JWT，无 cookie 会话，不需要 CSRF 防护）
      *   - 会话：STATELESS（无状态，每次请求通过 JWT 鉴权）
      *   - 授权：/auth/login、API 文档入口 permitAll；其余 authenticated
+     *   - 异常：未认证 → RestAuthenticationEntryPoint（401）；无权限 → RestAccessDeniedHandler（403）
      *   - 过滤器：JwtAuthenticationFilter 在 UsernamePasswordAuthenticationFilter 之前
      *
      * @param http HttpSecurity 构建器
@@ -75,7 +88,6 @@ public class SecurityConfig {
                         .requestMatchers("/auth/captcha").permitAll()
                         // 用户自助注册：登录前调用，必须放行
                         .requestMatchers("/auth/register").permitAll()
-                        // 用户信息兼容别名（旧前端路径错误时的兜底），必须认证也无妨，但保持一致
                         // ============== Knife4j / Swagger 文档入口放行 ==============
                         .requestMatchers("/doc.html").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
@@ -89,6 +101,11 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         // 其余接口必须认证
                         .anyRequest().authenticated()
+                )
+                // 异常处理：未认证/无权限统一返回 R 格式 JSON（code/message/traceId）
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
                 // 在 UsernamePasswordAuthenticationFilter 之前注入 JWT 鉴权过滤器
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

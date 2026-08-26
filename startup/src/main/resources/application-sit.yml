@@ -34,3 +34,9 @@ logging:
   level:
     root: INFO
     com.workspace.fatjar: INFO
+
+# Nacos 配置中心（com.alibaba.boot）— SIT 命名空间与拉取的 data-ids
+nacos:
+  config:
+    namespace: fatjar-sit
+    data-ids: application-common.yml,application-sit.yml

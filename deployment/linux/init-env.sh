@@ -22,7 +22,9 @@ MYSQL_DATA_DIR="/opt/mysql/data"    # MySQL 数据持久化目录（若为空则
 ROCKETMQ_NAMESRV_PORT="9876"
 ROCKETMQ_BROKER_PORT="10911"
 XXL_JOB_PORT="8085"
-NACOS_PORT="8848"
+NACOS_PORT="8080"                   # Nacos HTTP 访问端口（宿主机），容器内为 8080
+NACOS_GPRC="9848"
+NACOS_EXTRA_PORT="8848"             # 额外映射的 TCP 端口（按您要求保留）
 REDIS_PORT="6379"
 REDIS_PASSWORD=""                   # Redis 密码（留空表示无密码）
 
@@ -302,6 +304,9 @@ if ! docker run --rm mysql:latest \
     exit 1
 fi
 echo "✅ 数据库 xxl_job 已就绪。"
+echo "   ⚠️ 注意：xxl-job-admin 需要表结构才能正常运行。"
+echo "   请手动执行 deployment/sql/tables_xxl_job.sql 建表（含 admin/123456 默认账号）。"
+echo "   示例：docker run --rm -i mysql:latest mysql -h \$MYSQL_HOST -P \$MYSQL_PORT -u root -p\$MYSQL_ROOT_PASSWORD < tables_xxl_job.sql"
 
 # ---------- 6. 部署 xxl-job-admin（端口 8085） ----------
 echo "=========================================="
@@ -315,26 +320,29 @@ docker run -d --name xxl-job-admin \
     xuxueli/xxl-job-admin:2.4.0
 echo "✅ xxl-job-admin 部署完成。"
 
-# ---------- 7. 部署 Nacos ----------
+# ---------- 7. 部署 Nacos（按您要求映射端口） ----------
 echo "=========================================="
-echo "部署 Nacos (端口 $NACOS_PORT) ..."
-# 镜像版本与 docker-compose.yml 保持一致（v2.2.3），不使用 latest：
-#   nacos/nacos-server:latest 在 2.4+/3.x 默认开启鉴权，本仓库 nacos-init.sh 用的旧版
-#   OpenAPI（POST /nacos/v1/console/namespaces）在鉴权未配置时会返回空体，
-#   导致命名空间创建步骤出现"创建返回："空值，三个命名空间实际都没建成。
-# 另补两项：NACOS_AUTH_ENABLE=false 显式关鉴权；9848 端口供 Spring Cloud Alibaba
-#   Nacos 客户端 gRPC（discovery/长轮询）使用，仅映射 8848 会导致服务发现失败。
-NACOS_IMAGE="nacos/nacos-server:v2.2.3"
-pull_image "$NACOS_IMAGE"
+echo "部署 Nacos (HTTP 端口 $NACOS_PORT，额外 TCP 端口 $NACOS_EXTRA_PORT) ..."
+pull_image nacos/nacos-server:latest
 docker rm -f nacos 2>/dev/null || true
 
+# 生成 Nacos 鉴权所需的三项环境变量（全部使用随机 Base64 字符串）
+NACOS_AUTH_TOKEN=$(openssl rand -base64 32 | tr -d '\n')
+NACOS_AUTH_IDENTITY_KEY=$(openssl rand -base64 16 | tr -d '\n')
+NACOS_AUTH_IDENTITY_VALUE=$(openssl rand -base64 16 | tr -d '\n')
+echo "✅ 已生成 Nacos 认证凭证（Token/Key/Value）"
+
 docker run -d --name nacos \
-    -p "$NACOS_PORT":8848 \
-    -p 9848:9848 \
+    -p "$NACOS_PORT":8080 \
+    -p "$NACOS_EXTRA_PORT":8848 \
+    -p "$NACOS_GPRC":9848 \
     -e MODE=standalone \
-    -e NACOS_AUTH_ENABLE=false \
-    "$NACOS_IMAGE"
-echo "✅ Nacos 部署完成（v2.2.3，鉴权关闭，9848 gRPC 端口已映射）。"
+    -e NACOS_AUTH_TOKEN="$NACOS_AUTH_TOKEN" \
+    -e NACOS_AUTH_IDENTITY_KEY="$NACOS_AUTH_IDENTITY_KEY" \
+    -e NACOS_AUTH_IDENTITY_VALUE="$NACOS_AUTH_IDENTITY_VALUE" \
+    --restart=unless-stopped \
+    nacos/nacos-server:latest
+echo "✅ Nacos 部署完成。"
 
 # ---------- 8. 部署 Redis ----------
 echo "=========================================="
@@ -362,7 +370,8 @@ echo "访问信息如下（请使用宿主机 IP：$HOST_IP）："
 echo "  MySQL        :  $HOST_IP:$MYSQL_PORT (root / $MYSQL_ROOT_PASSWORD)"
 echo "  RocketMQ     :  Namesrv: $HOST_IP:$ROCKETMQ_NAMESRV_PORT, Broker: $HOST_IP:$ROCKETMQ_BROKER_PORT"
 echo "  xxl-job-admin:  http://$HOST_IP:$XXL_JOB_PORT/xxl-job-admin  (默认账号: admin / 123456)"
-echo "  Nacos        :  http://$HOST_IP:$NACOS_PORT/nacos  (默认账号: nacos / nacos)"
+echo "  Nacos HTTP   :  http://$HOST_IP:$NACOS_PORT/nacos  (默认账号: nacos / nacos)"
+echo "  Nacos 额外TCP:  $HOST_IP:$NACOS_EXTRA_PORT (按您要求保留)"
 echo "  Redis        :  redis://$HOST_IP:$REDIS_PORT  (密码: ${REDIS_PASSWORD:-无})"
 echo "------------------------------------------"
 echo "⚠️  若防火墙开启，请确保以上端口已放行。"

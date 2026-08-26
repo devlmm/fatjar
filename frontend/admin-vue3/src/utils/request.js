@@ -56,16 +56,17 @@ request.interceptors.response.use(
     // HTTP 2xx：取出业务数据
     const res = response.data
 
-    // 约定业务返回结构：{ code: 200, msg: 'ok', data: {...} }
-    // 401：未登录或 token 失效
-    if (res.code === 401) {
+    // 约定业务返回结构：{ code: 0, message: '成功', data: {...}, traceId: '...' }
+    // 后端 R 类约定：code == 0 成功，非 0 失败；字段名 message（非 msg）
+    // 10002：未登录或 Token 失效（后端 CommonResultCode.UNAUTHORIZED）
+    if (res.code === 10002) {
       handleUnauthorized()
       return Promise.reject(new Error('登录已过期，请重新登录'))
     }
-    // 非 200：业务异常，统一弹错
-    if (res.code !== 200) {
-      ElMessage.error(res.msg || '请求失败')
-      return Promise.reject(new Error(res.msg || '请求失败'))
+    // 非 0：业务异常，统一弹错
+    if (res.code !== 0) {
+      ElMessage.error(res.message || '请求失败')
+      return Promise.reject(new Error(res.message || '请求失败'))
     }
     // 正常返回业务数据（直接返回 res，调用方取 res.data）
     return res
@@ -77,11 +78,11 @@ request.interceptors.response.use(
       const status = error.response.status
       switch (status) {
         case 401:
+        case 403:
+          // 401 未认证 / 403 无权限：均清空登录态跳登录页
+          // （403 跳登录可让用户换用有权限的账号重新登录）
           handleUnauthorized()
           return Promise.reject(error)
-        case 403:
-          message = '没有权限访问该资源'
-          break
         case 404:
           message = '请求的资源不存在'
           break

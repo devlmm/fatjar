@@ -12,7 +12,7 @@
 
 -- 1. 超级管理员
 INSERT INTO `auth`.`sys_user` (`id`, `username`, `nickname`, `password`, `phone`, `email`, `status`, `tenant_id`, `create_by`, `update_by`, `deleted`)
-VALUES (1, 'admin', '超级管理员', '$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq8Kk3pVLdFq4SnYHnA6X9dP6HqJgK', '13800000000', 'admin@fatjar.com', 0, NULL, 'system', 'system', 0);
+VALUES (1, 'admin', '超级管理员', '$2a$10$omxjByG6svdXSUv/UH/VxeWlJRGSubQCjJWKYyX/RTFemTibMntWy', '13800000000', 'admin@fatjar.com', 0, NULL, 'system', 'system', 0);
 
 -- 2. admin 角色
 INSERT INTO `auth`.`sys_role` (`id`, `role_code`, `role_name`, `status`, `remark`, `create_by`, `update_by`, `deleted`)

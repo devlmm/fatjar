@@ -38,3 +38,9 @@ logging:
 fatjar:
   web:
     enable-knife4j: false
+
+# Nacos 配置中心（com.alibaba.boot）— PRD 命名空间与拉取的 data-ids
+nacos:
+  config:
+    namespace: fatjar-prd
+    data-ids: application-common.yml,application-prd.yml
