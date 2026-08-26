@@ -14,7 +14,7 @@
 # 可配置参数：Nacos 服务地址（默认本地 8848 端口）
 # 可通过环境变量覆盖：NACOS_ADDR=192.168.1.10:8848 bash nacos-init.sh
 # ---------------------------------------------------------------------
-NACOS_ADDR="${NACOS_ADDR:-localhost:8848}"
+NACOS_ADDR="${NACOS_ADDR:-192.168.3.100:8848}"
 
 # Nacos 默认登录账号（如启用鉴权需修改）
 NACOS_USER="${NACOS_USER:-nacos}"

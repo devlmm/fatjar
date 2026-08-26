@@ -21,20 +21,20 @@ spring:
   # 本地 Redis
   data:
     redis:
-      host: localhost
+      host: 192.168.3.100
       port: 6379
 
 # ---------------------------------------------------------------------
 # 中间件本地地址（覆盖 application-common.yml 的默认值）
 # ---------------------------------------------------------------------
 rocketmq:
-  name-server: localhost:9876
+  name-server: 192.168.3.100:9876
 
 xxl:
   job:
     admin:
       # 本地 XXL-JOB 调度中心（docker compose 端口映射 8085:8080）
-      addresses: http://localhost:8085/xxl-job-admin
+      addresses: http://192.168.3.100:8085/xxl-job-admin
 
 # ---------------------------------------------------------------------
 # 日志级别：DEV 环境使用 INFO，便于排查问题
