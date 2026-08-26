@@ -35,6 +35,19 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
+            <exclusions>
+                <!--
+                  显式排除 Redisson 传递的 snakeyaml：
+                  Redisson 3.27+ 在自己的 pom 中直接声明 snakeyaml 2.7+，
+                  其 Maven 传递距离会顶掉 fatjar-dependencies BOM 中锁的 2.2，
+                  进而导致 nacos-spring 的 SafeConstructor() 无参构造崩溃。
+                  snakeyaml 版本统一由 startup 模块 + fatjar-dependencies BOM 管理。
+                -->
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- 自研通用模块 -->

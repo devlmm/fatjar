@@ -50,11 +50,31 @@
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <exclusions>
+                <!--
+                  显式排除 Knife4j 传递的 snakeyaml：
+                  Knife4j 4.5.0 在自己的 pom 中直接声明 snakeyaml 2.7+，
+                  会顶掉 fatjar-dependencies BOM 中锁的 2.2，
+                  进而导致 nacos-spring 的 SafeConstructor() 无参构造崩溃。
+                  snakeyaml 版本统一由 startup 模块 + fatjar-dependencies BOM 管理。
+                -->
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- SpringDoc OpenAPI WebMvc UI（Swagger UI 页面） -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <exclusions>
+                <!-- 同上，SpringDoc 也可能传递高版本 snakeyaml，一并排除统一管理 -->
+                <exclusion>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- 自研通用模块（R / BizException / ResultCode / CommonResultCode / CommonConstants / UserContext） -->

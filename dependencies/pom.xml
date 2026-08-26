@@ -31,6 +31,15 @@
         <!-- ============ 核心框架版本 ============ -->
         <spring-boot.version>3.2.5</spring-boot.version>
         <spring.version>6.1.6</spring.version>
+        <!--
+          snakeyaml 锁定 2.2（重要，不可随意升级）：
+          nacos-config-spring-boot-starter:0.3.0-RC 内部 nacos-spring 的 DefaultYamlConfigParse
+          调用 new SafeConstructor()（无参）。snakeyaml 自 2.7 起删除了 SafeConstructor() 无参构造，
+          会抛 NoSuchMethodError: SafeConstructor: method 'void <init>()V' not found。
+          Redisson 3.27+ / Knife4j 4.5.0 等第三方传递依赖会尝试把 snakeyaml 升到 2.7+，
+          此处必须在 Spring Boot BOM 之前显式覆盖，保证 Nacos YAML 解析可用。
+        -->
+        <snakeyaml.version>2.2</snakeyaml.version>
 
         <!-- ============ 数据层 ============ -->
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
@@ -235,6 +244,21 @@
                 <groupId>com.workspace.fatjar</groupId>
                 <artifactId>fatjar-startup</artifactId>
                 <version>${fatjar.version}</version>
+            </dependency>
+
+            <!--
+              ============ snakeyaml 版本强制锁定（必须放在 Spring Boot BOM 之前） ============
+              原因：nacos-spring 的 DefaultYamlConfigParse.createYaml() 调用 new SafeConstructor()（无参），
+              但 snakeyaml 自 2.7 起删除了 SafeConstructor() 无参构造（只保留带 LoadingOptions 的构造），
+              导致 Nacos 模式（fatjar.nacos.enabled=true）启动时抛：
+                NoSuchMethodError: org.yaml.snakeyaml.constructor.SafeConstructor: method 'void <init>()V' not found
+              Redisson 3.27+、Knife4j 4.5.0 等传递依赖会尝试升级到 snakeyaml 2.7+，
+              这里必须在 Spring Boot-dependencies BOM 之前显式锁定，保证 Nacos YAML 解析正常。
+            -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
             </dependency>
 
             <!-- ============ Spring Boot BOM ============ -->
