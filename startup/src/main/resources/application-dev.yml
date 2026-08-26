@@ -1,43 +1,171 @@
 # ====================================================================================
-# application-dev.yml - DEV 环境配置（本地内网）
+# application-dev.yml - DEV 环境完整配置（本地内网开发环境）
 # ------------------------------------------------------------------------------------
-# 仅覆盖 DEV 与默认配置不同的部分，其余继承 application.yml 与 Nacos application-common.yml
+# 本文件包含 DEV 环境所需的全部业务配置：
+#   - fatjar.nacos.enabled=false → 直接使用本文件作为完整配置源
+#   - fatjar.nacos.enabled=true  → 复制本文件内容到 Nacos fatjar-dev 命名空间的
+#                                   DataId=application-dev.yml，Nacos 全权接管配置
 # ====================================================================================
+
+# ---------------------------------------------------------------------
+# 服务器配置
+# ---------------------------------------------------------------------
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      force: true
+  tomcat:
+    max-threads: 200
+    accept-count: 100
+
+# ---------------------------------------------------------------------
+# Spring 通用配置
+# ---------------------------------------------------------------------
 spring:
+  # MVC 配置：找不到 handler 抛 NoHandlerFoundException，交由 GlobalExceptionHandler 统一处理 404
+  mvc:
+    throw-exception-if-no-handler-found: true
+  # 全局 JSON 序列化
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+  # -----------------------------------------------------------------
+  # 数据源配置（Druid 连接池）- DEV 本地内网
+  # 数据库架构：单 MySQL 实例 + 多数据库，fatjar 为连接锚定库
+  # -----------------------------------------------------------------
   datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://192.168.3.100:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: root
-    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      filters: stat,wall
+      stat-view-servlet:
+        enabled: true
+        login-username: druid
+        login-password: druid123
+
+  # -----------------------------------------------------------------
+  # Redis 配置 - DEV 本地内网
+  # -----------------------------------------------------------------
   data:
     redis:
       host: 192.168.3.100
       port: 6379
+      # 注意：不写 password 默认值（禁止 ${REDIS_PASSWORD:} 这种空字符串写法），
+      # Redisson 把空字符串视为"有密码"会发 AUTH，导致无密码 Redis 握手失败。
+      # 需要密码时通过 Nacos 或环境变量 spring.data.redis.password=xxx 注入即可。
+      database: 0
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 0
 
-# RocketMQ（DEV 本地，未安装可不配置）
+# ---------------------------------------------------------------------
+# MyBatis-Plus 配置
+# mapper-locations：多 jar 扫描 classpath*:mapper/**/*.xml
+# id-type=INPUT：应用层雪花算法填充主键
+# ---------------------------------------------------------------------
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.workspace.fatjar.**.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    # DEV 环境打印 SQL
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
+  global-config:
+    db-config:
+      id-type: INPUT
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ---------------------------------------------------------------------
+# RocketMQ 配置 - DEV 本地内网
+# ---------------------------------------------------------------------
 rocketmq:
   name-server: 192.168.3.100:9876
+  producer:
+    group: fatjar-producer-group
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
+    retry-times-when-send-async-failed: 2
 
-# XXL-JOB 执行器（DEV）
+# ---------------------------------------------------------------------
+# XXL-JOB 调度配置 - DEV
+# ---------------------------------------------------------------------
 xxl:
   job:
     enabled: true
     admin:
       addresses: http://192.168.3.100:8085/xxl-job-admin
+    # accessToken 不写空默认值；需要鉴权时通过 Nacos/环境变量 xxl.job.accessToken=xxx 注入
     executor:
       appname: fatjar-executor
       port: 9999
+      logpath: /app/logs/xxl-job
+      logretentiondays: 30
 
-# 日志级别：DEV 详细日志
+# ---------------------------------------------------------------------
+# fatjar 业务自定义配置
+# ---------------------------------------------------------------------
+fatjar:
+  jwt:
+    # DEV 环境密钥，生产必须通过 Nacos/环境变量覆盖
+    secret: fatjar-secret-key-2024-must-be-at-least-32-bytes-long
+    # 过期时间 24 小时
+    expire: 86400
+  # 雪花算法 worker-id（多实例需保证唯一）
+  worker-id: ${FATJAR_WORKER_ID:1}
+  # 多租户默认关闭
+  tenant:
+    enabled: false
+  web:
+    # DEV 环境开启 Knife4j 接口文档
+    enable-knife4j: true
+  # 环境标识
+  env: dev
+
+# ---------------------------------------------------------------------
+# Spring Boot Actuator 健康检查（独立端口 8081）
+# ---------------------------------------------------------------------
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# ---------------------------------------------------------------------
+# 日志配置：DEV 环境 DEBUG 级别
+# ---------------------------------------------------------------------
 logging:
   level:
     root: INFO
     com.workspace.fatjar: DEBUG
-
-# Nacos 配置中心（com.alibaba.boot）— DEV 命名空间与拉取的 data-ids
-# 与 nacos-init.sh 上传到 fatjar-dev 命名空间的 DataId 一致
-nacos:
-  config:
-    namespace: fatjar-dev
-    data-ids: application-common.yml,application-dev.yml
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

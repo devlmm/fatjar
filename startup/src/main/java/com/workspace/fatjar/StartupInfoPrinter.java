@@ -61,12 +61,15 @@ public class StartupInfoPrinter implements ApplicationRunner {
 
         boolean knife4j = Boolean.parseBoolean(orDefault(env.getProperty("fatjar.web.enable-knife4j"), "false"));
         String actuatorPort = env.getProperty("management.server.port");
+        // Nacos 总开关：fatjar.nacos.enabled（true=读Nacos，false=读本地yml）
+        boolean nacosEnabled = Boolean.parseBoolean(orDefault(env.getProperty("fatjar.nacos.enabled"), "false"));
 
         StringBuilder sb = new StringBuilder();
         sb.append('\n').append(HLINE);
         sb.append("\n  ✅ fatjar 启动成功（DEV 环境）");
         sb.append('\n').append(HLINE);
         sb.append("\n  运行环境    : ").append(profiles());
+        sb.append("\n  配置源      : ").append(nacosEnabled ? "Nacos 配置中心" : "本地 application-dev.yml");
         sb.append("\n  访问地址    : ").append(accessUrl);
         if (knife4j) {
             sb.append("\n  接口文档    : ").append(accessUrl).append("/doc.html");
@@ -81,7 +84,10 @@ public class StartupInfoPrinter implements ApplicationRunner {
         sb.append("\n  Nacos       : ").append(nacosInfo());
         sb.append("\n  RocketMQ    : ").append(rocketmqInfo());
         sb.append("\n  XXL-JOB     : ").append(xxlInfo());
-        sb.append("\n  雪花workerId: ").append(orDefault(env.getProperty("FATJAR_WORKER_ID"), "(未设置，默认 1)"));
+        // workerId 优先读配置文件 fatjar.worker-id（Nacos 可覆盖），兜底环境变量 FATJAR_WORKER_ID
+        String workerId = orDefault(env.getProperty("fatjar.worker-id"),
+                orDefault(env.getProperty("FATJAR_WORKER_ID"), "(未设置，默认 1)"));
+        sb.append("\n  雪花workerId: ").append(workerId);
         sb.append('\n').append(HLINE);
 
         log.info(sb.toString());

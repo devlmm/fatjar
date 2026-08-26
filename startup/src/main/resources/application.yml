@@ -1,103 +1,80 @@
 # ====================================================================================
-# application.yml - 本地兜底配置（优先级最低，被 Nacos 与 application-{env}.yml 覆盖）
+# application.yml - 引导配置（只负责 Nacos 开关与连接信息，优先级最高）
 # ------------------------------------------------------------------------------------
-# 仅保留 Nacos 不可用时的最小启动配置，生产环境以 Nacos 为准。
+# 核心开关：fatjar.nacos.enabled
+#   true  → 启用 Nacos 配置中心，直接读取 Nacos 配置，忽略本地 application-{env}.yml 的业务配置
+#   false → 禁用 Nacos，直接读取本地 application-{env}.yml 作为完整配置源
+# 其他所有业务配置（数据源、Redis、MyBatis等）均在 application-{env}.yml 或 Nacos 中。
 # ====================================================================================
-server:
-  port: 8080
-  servlet:
-    encoding:
-      charset: UTF-8
-      force: true
-
 spring:
-  # MVC 配置：找不到 handler 抛 NoHandlerFoundException，交由 GlobalExceptionHandler 统一处理 404
-  # 注意：不关闭 spring.web.resources.add-mappings，以保留 webjars/knife4j 静态资源服务
-  mvc:
-    throw-exception-if-no-handler-found: true
   application:
-    # 应用名（原在 bootstrap.yml，Spring Boot 3 不加载 bootstrap.yml，迁至此）
     name: fatjar
-  # 默认激活 DEV 环境，保证 IDE 直接 Run FatjarApplication 时：
-  #   1) 自动加载 application-dev.yml（MySQL: localhost:3306, Redis: localhost:6379 等配置）
-  #   2) logback-spring.xml 的 <springProfile name="dev"> 块生效（CONSOLE + FILE 双输出）
-  # 如需切换：Run Configuration → Program arguments 加 --spring.profiles.active=sit/prd
-  #          或 Nacos 配置中心、启动参数 -Dspring.profiles.active=xxx 都会覆盖此项
+  # 默认激活 DEV 环境，可通过启动参数 --spring.profiles.active=sit|prd 覆盖
   profiles:
     active: dev
-  jackson:
-    # 全局 JSON 序列化：驼峰命名 + 时区
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: Asia/Shanghai
-    default-property-inclusion: non_null
 
-# Nacos 配置中心（com.alibaba.boot:nacos-config-spring-boot-starter）
-# Spring Boot 3 不加载 bootstrap.yml，故 Nacos 引导配置置于 application.yml
-# NacosConfigEnvironmentProcessor（spring.factories 注册的 EnvironmentPostProcessor）
-# 在 bean 创建前加载远程配置，确保 DataSource/Redis 可被 Nacos 覆盖
+# =========================================
+# Nacos 总开关（用户只需要改这一个值）
+# =========================================
+fatjar:
+  nacos:
+    # true=读Nacos（忽略本地application-{env}.yml业务配置），false=读本地yml
+    enabled: false
+
+# =========================================
+# Nacos 配置中心连接信息（com.alibaba.boot）
+# nacos.config.bootstrap.enable / remote-first 跟随 fatjar.nacos.enabled 联动
+# =========================================
 nacos:
   config:
-    # Nacos 服务地址：DEV 默认指向 192.168.3.100:8848；SIT/PRD 用 NACOS_ADDR 环境变量覆盖
+    # Nacos 服务地址：DEV 默认 192.168.3.100:8848；SIT/PRD 通过 NACOS_ADDR 环境变量覆盖
     server-addr: ${NACOS_ADDR:192.168.3.100:8848}
-    # 配置分组（与 nacos-init.sh 的 FATJAR_GROUP 一致）
+    # 配置分组
     group: FATJAR_GROUP
     # 配置文件类型
     type: yaml
     # 启用自动刷新
     auto-refresh: true
-    # remote-first=false：远程配置作为低优先级补充，本地 application-{env}.yml 主导
-    # 原因：com.alibaba.boot 多 data-id（application-common.yml + application-{env}.yml）的
-    #   装配顺序涉及 Collections.reverse，静态难断言谁覆盖谁；DEV 本地已有可用地址，
-    #   先让本地主导确保零环境变量启动。需 Nacos 全权主导时改 true（并按实测补 MYSQL_HOST 等）
-    remote-first: false
-    # 命名空间与 data-ids 按 profile 在 application-{env}.yml 中指定
+    # 跟随总开关：开启Nacos时远程优先，覆盖本地一切配置
+    remote-first: ${fatjar.nacos.enabled:false}
+    # 早期加载与总开关联动
     bootstrap:
-      # 启用早期加载（EnvironmentPostProcessor 阶段），bean 创建前远程配置就位
-      enable: true
-      log-enable: true
+      enable: ${fatjar.nacos.enabled:false}
+      log-enable: ${fatjar.nacos.enabled:false}
 
-# MyBatis-Plus 配置（Nacos application-common.yml 会覆盖此项）
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      # 主键策略：INPUT 表示由应用层填充（雪花 ID），非数据库自增
-      id-type: INPUT
-      # 逻辑删除字段
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
+# ========== 各 profile 对应的 Nacos namespace 与 data-ids ==========
+# 即使 fatjar.nacos.enabled=false 也保留声明，便于随时切回 Nacos 模式
 
-# Actuator 健康检查（独立端口 8081，便于 K8s 探针与业务隔离）
-management:
-  server:
-    port: 8081
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: when_authorized
+---
+# DEV 环境 Nacos 元信息
+spring:
+  config:
+    activate:
+      on-profile: dev
+nacos:
+  config:
+    namespace: fatjar-dev
+    # 只拉取 application-dev.yml（包含完整配置，用户直接复制 startup 下的同名文件即可）
+    data-ids: application-dev.yml
 
-# JWT 配置（Nacos 可覆盖）
-fatjar:
-  jwt:
-    # 密钥（至少 32 字节，生产环境务必从 Nacos 注入）
-    secret: fatjar-secret-key-2024-must-be-at-least-32-bytes-long
-    # 过期时间（秒），默认 24 小时
-    expire: 86400
-  # 多租户默认关闭（erp/oa/crm/ems 业务表无 tenant_id 列，开启会报错）
-  tenant:
-    enabled: false
-  web:
-    # Knife4j 文档开关（DEV 开启，PRD 可关闭）
-    enable-knife4j: true
+---
+# SIT 环境 Nacos 元信息
+spring:
+  config:
+    activate:
+      on-profile: sit
+nacos:
+  config:
+    namespace: fatjar-sit
+    data-ids: application-sit.yml
 
-# 日志
-logging:
-  level:
-    root: INFO
-    com.workspace.fatjar: INFO
+---
+# PRD 环境 Nacos 元信息
+spring:
+  config:
+    activate:
+      on-profile: prd
+nacos:
+  config:
+    namespace: fatjar-prd
+    data-ids: application-prd.yml

@@ -304,9 +304,6 @@ if ! docker run --rm mysql:latest \
     exit 1
 fi
 echo "✅ 数据库 xxl_job 已就绪。"
-echo "   ⚠️ 注意：xxl-job-admin 需要表结构才能正常运行。"
-echo "   请手动执行 deployment/sql/tables_xxl_job.sql 建表（含 admin/123456 默认账号）。"
-echo "   示例：docker run --rm -i mysql:latest mysql -h \$MYSQL_HOST -P \$MYSQL_PORT -u root -p\$MYSQL_ROOT_PASSWORD < tables_xxl_job.sql"
 
 # ---------- 6. 部署 xxl-job-admin（端口 8085） ----------
 echo "=========================================="

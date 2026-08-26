@@ -85,7 +85,7 @@ public class FatjarApplication {
                     "  2) 如果使用 Docker，请执行：",
                     "       docker run -d --name fatjar-redis -p 6379:6379 redis:7-alpine",
                     "  3) 如果 Redis 地址不是本机，请修改 application-dev.yml 中 spring.data.redis.host/port",
-                    "     或在 Nacos 配置中心的 application-common.yml 中覆盖该配置");
+                    "     或在 Nacos 配置中心（fatjar-dev 命名空间 → application-dev.yml）覆盖该配置");
         } else if (combined.contains("communicationsexception")
                 || combined.contains("communications link failure")
                 || combined.contains("publickeyretrieval is not allowed")
