@@ -32,7 +32,7 @@ spring:
     nacos:
       config:
         # Nacos 服务地址：DEV 默认 localhost:8848；SIT/PRD 通过 NACOS_ADDR 环境变量覆盖
-        server-addr: ${NACOS_ADDR:localhost:8848}
+        server-addr: ${NACOS_ADDR:192.168.3.100:8848}
         # Nacos 鉴权账号（默认 nacos/nacos）
         username: ${NACOS_USERNAME:nacos}
         password: ${NACOS_PASSWORD:nacos}
@@ -54,6 +54,9 @@ spring:
   cloud:
     nacos:
       config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
         namespace: fatjar-sit
 
 ---
@@ -68,4 +71,7 @@ spring:
   cloud:
     nacos:
       config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
         namespace: fatjar-prd
