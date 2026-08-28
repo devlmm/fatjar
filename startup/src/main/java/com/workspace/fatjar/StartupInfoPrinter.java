@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertySource;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,14 +38,14 @@ public class StartupInfoPrinter implements ApplicationRunner {
     private static final String HLINE =
             "═══════════════════════════════════════════════════════════════════";
 
-    private final Environment env;
+    private final ConfigurableEnvironment env;
 
     /**
      * 构造注入 Spring Environment，读取各配置项
      *
      * @param env Spring 环境抽象
      */
-    public StartupInfoPrinter(Environment env) {
+    public StartupInfoPrinter(ConfigurableEnvironment env) {
         this.env = env;
     }
 
@@ -61,8 +63,10 @@ public class StartupInfoPrinter implements ApplicationRunner {
 
         boolean knife4j = Boolean.parseBoolean(orDefault(env.getProperty("fatjar.web.enable-knife4j"), "false"));
         String actuatorPort = env.getProperty("management.server.port");
-        // Nacos 总开关：fatjar.nacos.enabled（true=读Nacos，false=读本地yml）
-        boolean nacosEnabled = Boolean.parseBoolean(orDefault(env.getProperty("fatjar.nacos.enabled"), "false"));
+        // Nacos 配置中心：spring-cloud-starter-alibaba-nacos-config
+        // 通过 spring.cloud.nacos.config.import 从 Nacos 拉取配置
+        String nacosAddr = env.getProperty("spring.cloud.nacos.config.server-addr");
+        boolean nacosEnabled = nacosAddr != null && !nacosAddr.isBlank();
 
         StringBuilder sb = new StringBuilder();
         sb.append('\n').append(HLINE);
@@ -88,6 +92,14 @@ public class StartupInfoPrinter implements ApplicationRunner {
         String workerId = orDefault(env.getProperty("fatjar.worker-id"),
                 orDefault(env.getProperty("FATJAR_WORKER_ID"), "(未设置，默认 1)"));
         sb.append("\n  雪花workerId: ").append(workerId);
+        sb.append('\n').append(HLINE);
+
+        // 打印关键属性的配置来源，便于确认 Nacos 配置是否生效
+        sb.append("\n  [配置来源追踪]");
+        printSource(sb, "spring.datasource.url", "MySQL URL");
+        printSource(sb, "spring.data.redis.host", "Redis Host");
+        printSource(sb, "rocketmq.name-server", "RocketMQ");
+        printSource(sb, "xxl.job.admin.addresses", "XXL-JOB");
         sb.append('\n').append(HLINE);
 
         log.info(sb.toString());
@@ -143,13 +155,12 @@ public class StartupInfoPrinter implements ApplicationRunner {
      * @return server-addr (namespace: xxx) 形式串
      */
     private String nacosInfo() {
-        // com.alibaba.boot:nacos-config-spring-boot-starter 读 nacos.config.* 前缀
-        // （非 spring.cloud.nacos.* ——后者是 Spring Cloud Alibaba，本工程未引入）
-        String addr = env.getProperty("nacos.config.server-addr");
+        // spring-cloud-starter-alibaba-nacos-config 读 spring.cloud.nacos.config.* 前缀
+        String addr = env.getProperty("spring.cloud.nacos.config.server-addr");
         if (addr == null || addr.isBlank()) {
             return "未配置";
         }
-        String ns = env.getProperty("nacos.config.namespace");
+        String ns = env.getProperty("spring.cloud.nacos.config.namespace");
         return addr + (ns == null || ns.isBlank() ? "" : " (namespace: " + ns + ")");
     }
 
@@ -191,5 +202,25 @@ public class StartupInfoPrinter implements ApplicationRunner {
      */
     private String orDefault(String value, String def) {
         return (value == null || value.isBlank()) ? def : value;
+    }
+
+    /**
+     * 追踪指定属性来自哪个 PropertySource，帮助确认 Nacos 配置是否生效
+     *
+     * @param sb     输出缓冲
+     * @param key    属性键
+     * @param label  显示标签
+     */
+    private void printSource(StringBuilder sb, String key, String label) {
+        String value = env.getProperty(key);
+        for (PropertySource<?> ps : env.getPropertySources()) {
+            if (ps.getProperty(key) != null) {
+                sb.append("\n    ").append(label).append(" = ").append(value)
+                        .append("  ← ").append(ps.getName());
+                return;
+            }
+        }
+        sb.append("\n    ").append(label).append(" = ").append(value == null ? "未配置" : value)
+                .append("  ← (未知来源)");
     }
 }

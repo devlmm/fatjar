@@ -1,9 +1,10 @@
 # ====================================================================================
-# application-sit.yml - SIT 环境完整配置（阿里云集成测试环境）
+# application-dev.yml - DEV 环境完整配置（本地内网开发环境）
 # ------------------------------------------------------------------------------------
-# 本文件包含 SIT 环境所需的全部业务配置，当 fatjar.nacos.enabled=false 时直接使用。
-# 当 fatjar.nacos.enabled=true 时，可直接复制本文件内容到 Nacos 的 fatjar-sit 命名空间。
-# 所有中间件地址使用环境变量占位，便于在 CI/CD 或容器中注入真实地址。
+# 本文件包含 DEV 环境所需的全部业务配置，同时作为 Nacos 不可用时的本地兗底配置：
+#   - Nacos 可用 → 从 Nacos fatjar-dev 命名空间拉取 application-dev.yml（FATJAR_GROUP）
+#   - Nacos 不可用 → 直接使用本文件作为完整配置源（optional: 前缀保证回退）
+# 若要将配置迁移到 Nacos，复制本文件内容到 Nacos 对应命名空间的 DataId 即可。
 # ====================================================================================
 
 # ---------------------------------------------------------------------
@@ -24,22 +25,25 @@ server:
 # Spring 通用配置
 # ---------------------------------------------------------------------
 spring:
+  # MVC 配置：找不到 handler 抛 NoHandlerFoundException，交由 GlobalExceptionHandler 统一处理 404
   mvc:
     throw-exception-if-no-handler-found: true
+  # 全局 JSON 序列化
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
     default-property-inclusion: non_null
 
   # -----------------------------------------------------------------
-  # 数据源配置（Druid 连接池）- SIT 阿里云
+  # 数据源配置（Druid 连接池）- DEV 本地内网
+  # 数据库架构：单 MySQL 实例 + 多数据库，fatjar 为连接锚定库
   # -----------------------------------------------------------------
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:mysql-sit}:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    url: jdbc:mysql://localhost:3306/fatjar?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
     druid:
       initial-size: 5
       min-idle: 5
@@ -58,13 +62,15 @@ spring:
         login-password: druid123
 
   # -----------------------------------------------------------------
-  # Redis 配置 - SIT 阿里云
+  # Redis 配置 - DEV 本地内网
   # -----------------------------------------------------------------
   data:
     redis:
-      host: ${REDIS_HOST:redis-sit}
+      host: localhost
       port: 6379
-      # 不写 password 空默认值，避免 Redisson 误发 AUTH。需要密码时用环境变量/Naocs 注入。
+      # 注意：不写 password 默认值（禁止 ${REDIS_PASSWORD:} 这种空字符串写法），
+      # Redisson 把空字符串视为"有密码"会发 AUTH，导致无密码 Redis 握手失败。
+      # 需要密码时通过 Nacos 或环境变量 spring.data.redis.password=xxx 注入即可。
       database: 0
       timeout: 5000
       lettuce:
@@ -75,14 +81,16 @@ spring:
 
 # ---------------------------------------------------------------------
 # MyBatis-Plus 配置
+# mapper-locations：多 jar 扫描 classpath*:mapper/**/*.xml
+# id-type=INPUT：应用层雪花算法填充主键
 # ---------------------------------------------------------------------
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
   type-aliases-package: com.workspace.fatjar.**.domain
   configuration:
     map-underscore-to-camel-case: true
-    # SIT 环境关闭 SQL 打印
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    # DEV 环境打印 SQL
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     cache-enabled: true
   global-config:
     db-config:
@@ -92,10 +100,10 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 # ---------------------------------------------------------------------
-# RocketMQ 配置 - SIT 阿里云
+# RocketMQ 配置 - DEV 本地内网
 # ---------------------------------------------------------------------
 rocketmq:
-  name-server: ${ROCKETMQ_NAMESERVER:rocketmq-sit:9876}
+  name-server: localhost:9876
   producer:
     group: fatjar-producer-group
     send-message-timeout: 3000
@@ -103,16 +111,16 @@ rocketmq:
     retry-times-when-send-async-failed: 2
 
 # ---------------------------------------------------------------------
-# XXL-JOB 调度配置 - SIT
+# XXL-JOB 调度配置 - DEV
 # ---------------------------------------------------------------------
 xxl:
   job:
     enabled: true
     admin:
-      addresses: http://xxl-job-admin-sit:8085/xxl-job-admin
-    # accessToken 不写空默认值；需要鉴权时通过 Nacos/环境变量注入
+      addresses: http://localhost:8085/xxl-job-admin
+    # accessToken 不写空默认值；需要鉴权时通过 Nacos/环境变量 xxl.job.accessToken=xxx 注入
     executor:
-      appname: fatjar-executor-sit
+      appname: fatjar-executor
       port: 9999
       logpath: /app/logs/xxl-job
       logretentiondays: 30
@@ -122,20 +130,23 @@ xxl:
 # ---------------------------------------------------------------------
 fatjar:
   jwt:
-    # SIT 环境密钥，建议通过 Nacos 或环境变量覆盖
-    secret: ${JWT_SECRET:fatjar-sit-jwt-secret-key-please-change-in-nacos}
+    # DEV 环境密钥，生产必须通过 Nacos/环境变量覆盖
+    secret: fatjar-secret-key-2024-must-be-at-least-32-bytes-long
+    # 过期时间 24 小时
     expire: 86400
+  # 雪花算法 worker-id（多实例需保证唯一）
   worker-id: ${FATJAR_WORKER_ID:1}
+  # 多租户默认关闭
   tenant:
     enabled: false
   web:
-    # SIT 环境可开启 Knife4j 文档便于联调
+    # DEV 环境开启 Knife4j 接口文档
     enable-knife4j: true
   # 环境标识
-  env: sit
+  env: dev
 
 # ---------------------------------------------------------------------
-# Spring Boot Actuator 健康检查
+# Spring Boot Actuator 健康检查（独立端口 8081）
 # ---------------------------------------------------------------------
 management:
   server:
@@ -149,12 +160,12 @@ management:
       show-details: when_authorized
 
 # ---------------------------------------------------------------------
-# 日志配置：SIT 收敛到 INFO 级别
+# 日志配置：DEV 环境 DEBUG 级别
 # ---------------------------------------------------------------------
 logging:
   level:
     root: INFO
-    com.workspace.fatjar: INFO
-    org.springframework.web: WARN
+    com.workspace.fatjar: DEBUG
+    org.springframework.web: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

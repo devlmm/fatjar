@@ -79,7 +79,7 @@
 - ✅ **统一返回与异常**：`R<T>` / `PageResult<T>` / `BizException` + 全局异常处理
 - ✅ **雪花算法主键**：单机/多 Pod 唯一，`FATJAR_WORKER_ID` 环境变量防冲突
 - ✅ **链路追踪**：MDC + Filter，`X-Trace-Id` 跨服务传播
-- ✅ **配置中心**：Nacos 统一配置，优先级 `Nacos > application-{env}.yml > application.yml`
+- ✅ **配置中心**：Spring Cloud Alibaba Nacos Config 统一配置，优先级 `Nacos > application-{env}.yml > application.yml`
 - ✅ **三环境支持**：DEV（本地）/ SIT（阿里云测试）/ PRD（阿里云生产）
 - ✅ **全链路 DevOps**：Docker + K8S + Jenkins/GitLab CI + Nacos 自动发布
 - ✅ **DEV 文档化几步搭建**：README Section 6 覆盖 JDK/Maven → Docker → 初始化 → 编译 → 启动验证，无脚本依赖
@@ -117,7 +117,7 @@
 | 自动发布 | Jenkins / GitLab CI | - |
 | 代码版本 | Git | - |
 | 操作系统 | RockyLinux | - |
-| 配置中心 | Nacos | 0.3.0-RC (SB3) |
+| 配置中心 | Nacos (Spring Cloud Alibaba) | SCA 2023.0.1.0 |
 | 负载均衡 | Nginx (DEV) / 阿里云 SLB (SIT/PRD) | - |
 | 健康检查 | Spring Actuator | 3.x |
 | 代码生成 | MyBatis-Plus Generator + Velocity | 3.5.5 / 2.3 |
@@ -601,13 +601,17 @@ java -jar startup/target/fatjar-startup-1.0.0.jar --spring.profiles.active=sit
 ### 8.1 优先级
 
 ```
-Nacos 配置  >  application-{env}.yml  >  application.yml
+Nacos (application-{env}.yml) > Nacos (application-common.yml) > application-{env}.yml > application.yml
 ```
 
-- `bootstrap.yml`：Nacos 引导（命名空间、服务地址）
-- `application.yml`：本地兜底最小配置
-- `application-{dev,sit,prd}.yml`：环境覆盖
-- Nacos `application-common.yml`：所有环境共享（数据源/Redis/MQ/JWT）
+- `application.yml`：Nacos 连接信息（server-addr/username/password）+ 本地兗底最小配置
+- `application-{dev,sit,prd}.yml`：环境覆盖 + Nacos namespace/import 声明
+- Nacos `application-common.yml`：所有环境共享（数据源/Redis/MQ/JWT/MyBatis-Plus）
+- Nacos `application-{env}.yml`：环境专属覆盖
+
+集成方案：`spring-cloud-starter-alibaba-nacos-config`（SCA 2023.0.1.0），
+通过 `spring.cloud.nacos.config.import` 在启动时从 Nacos 拉取配置，
+`optional:` 前缀保证 Nacos 不可用时自动回退到本地配置。
 
 ### 8.2 三环境
 
@@ -619,12 +623,12 @@ Nacos 配置  >  application-{env}.yml  >  application.yml
 
 ### 8.3 Nacos DataId 清单
 
-| DataId | group | 说明 |
-|--------|-------|------|
-| application-common.yml | DEFAULT_GROUP | 通用配置（数据源/Redis/MQ/JWT/MyBatis-Plus） |
-| fatjar-dev.yml | DEFAULT_GROUP | DEV 覆盖 |
-| fatjar-sit.yml | DEFAULT_GROUP | SIT 覆盖 |
-| fatjar-prd.yml | DEFAULT_GROUP | PRD 覆盖 |
+| DataId | group | 命名空间 | 说明 |
+|--------|-------|---------|------|
+| application-common.yml | FATJAR_GROUP | fatjar-dev/sit/prd | 通用配置（数据源/Redis/MQ/JWT/MyBatis-Plus） |
+| application-dev.yml | FATJAR_GROUP | fatjar-dev | DEV 覆盖 |
+| application-sit.yml | FATJAR_GROUP | fatjar-sit | SIT 覆盖 |
+| application-prd.yml | FATJAR_GROUP | fatjar-prd | PRD 覆盖 |
 
 ### 8.4 关键配置项
 
@@ -837,7 +841,7 @@ JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8
 
 ### 14.6 Nacos namespace 不一致？
 
-`bootstrap.yml` 默认 `namespace: fatjar-dev`，必须与 `nacos-init.sh` 创建的命名空间 ID 一致（不是 `dev`）。
+`application.yml` 中 dev profile 块配置 `spring.cloud.nacos.config.namespace: fatjar-dev`，必须与 Nacos 控制台创建的命名空间 ID 一致（不是 `dev`）。
 
 ### 14.7 主键为什么是 INPUT 而非 AUTO？
 

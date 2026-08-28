@@ -1,10 +1,17 @@
 # ====================================================================================
-# application.yml - 引导配置（只负责 Nacos 开关与连接信息，优先级最高）
+# application.yml - 应用引导配置
 # ------------------------------------------------------------------------------------
-# 核心开关：fatjar.nacos.enabled
-#   true  → 启用 Nacos 配置中心，直接读取 Nacos 配置，忽略本地 application-{env}.yml 的业务配置
-#   false → 禁用 Nacos，直接读取本地 application-{env}.yml 作为完整配置源
-# 其他所有业务配置（数据源、Redis、MyBatis等）均在 application-{env}.yml 或 Nacos 中。
+# 配置优先级（从高到低）：
+#   ① Nacos 远程配置（application-{env}.yml from FATJAR_GROUP）
+#   ② 本地兜底配置（environment/application-{env}.yml，通过 spring.config.import 导入）
+#   ③ 本文件（application.yml，Nacos 连接信息等引导配置）
+#
+# Spring Cloud Alibaba Nacos Config：
+#   启动时通过 spring.config.import 从 Nacos 拉取远程配置。
+#   namespace 通过 spring.cloud.nacos.config.namespace 属性设置（每个 profile 块覆盖）。
+#   Nacos 不可用时启动直接失败（保证配置源正确性）。
+#   本地兜底配置放在 environment/ 子目录（不会被 Spring Boot 自动检测），
+#   通过 optional:classpath: 导入，文件缺失不阻断启动。
 # ====================================================================================
 spring:
   application:
@@ -12,69 +19,53 @@ spring:
   # 默认激活 DEV 环境，可通过启动参数 --spring.profiles.active=sit|prd 覆盖
   profiles:
     active: dev
-
-# =========================================
-# Nacos 总开关（用户只需要改这一个值）
-# =========================================
-fatjar:
-  nacos:
-    # true=读Nacos（忽略本地application-{env}.yml业务配置），false=读本地yml
-    enabled: false
-
-# =========================================
-# Nacos 配置中心连接信息（com.alibaba.boot）
-# nacos.config.bootstrap.enable / remote-first 跟随 fatjar.nacos.enabled 联动
-# =========================================
-nacos:
+  # -----------------------------------------------------------------
+  # Spring Cloud Alibaba Nacos Config 配置中心
+  # -----------------------------------------------------------------
   config:
-    # Nacos 服务地址：DEV 默认 192.168.3.100:8848；SIT/PRD 通过 NACOS_ADDR 环境变量覆盖
-    server-addr: ${NACOS_ADDR:192.168.3.100:8848}
-    # 配置分组
-    group: FATJAR_GROUP
-    # 配置文件类型
-    type: yaml
-    # 启用自动刷新
-    auto-refresh: true
-    # 跟随总开关：开启Nacos时远程优先，覆盖本地一切配置
-    remote-first: ${fatjar.nacos.enabled:false}
-    # 早期加载与总开关联动
-    bootstrap:
-      enable: ${fatjar.nacos.enabled:false}
-      log-enable: ${fatjar.nacos.enabled:false}
+    import:
+      # ① 从 Nacos 拉取 DEV 环境配置（最高优先级）
+      - nacos:application-dev.yml?group=FATJAR_GROUP
+      # ② 本地兜底配置（Nacos 配置不足时由本文件补充）
+      - optional:classpath:/environment/application-dev.yml
+  cloud:
+    nacos:
+      config:
+        # Nacos 服务地址：DEV 默认 localhost:8848；SIT/PRD 通过 NACOS_ADDR 环境变量覆盖
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        # Nacos 鉴权账号（默认 nacos/nacos）
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        # DEV 环境命名空间
+        namespace: fatjar-dev
 
-# ========== 各 profile 对应的 Nacos namespace 与 data-ids ==========
-# 即使 fatjar.nacos.enabled=false 也保留声明，便于随时切回 Nacos 模式
+# ========== 各环境 Nacos 命名空间 + 本地兜底覆盖 ==========
+# SIT/PRD 通过 profile 分块覆盖 namespace、Nacos import 和本地兜底文件。
 
 ---
-# DEV 环境 Nacos 元信息
-spring:
-  config:
-    activate:
-      on-profile: dev
-nacos:
-  config:
-    namespace: fatjar-dev
-    # 只拉取 application-dev.yml（包含完整配置，用户直接复制 startup 下的同名文件即可）
-    data-ids: application-dev.yml
-
----
-# SIT 环境 Nacos 元信息
+# SIT 环境配置
 spring:
   config:
     activate:
       on-profile: sit
-nacos:
-  config:
-    namespace: fatjar-sit
-    data-ids: application-sit.yml
+    import:
+      - nacos:application-sit.yml?group=FATJAR_GROUP
+      - optional:classpath:/environment/application-sit.yml
+  cloud:
+    nacos:
+      config:
+        namespace: fatjar-sit
 
 ---
-# PRD 环境 Nacos 元信息
+# PRD 环境配置
 spring:
   config:
     activate:
       on-profile: prd
-nacos:
-  config:
-    namespace: fatjar-prd
-    data-ids: application-prd.yml
+    import:
+      - nacos:application-prd.yml?group=FATJAR_GROUP
+      - optional:classpath:/environment/application-prd.yml
+  cloud:
+    nacos:
+      config:
+        namespace: fatjar-prd

@@ -107,15 +107,15 @@ public class FatjarApplication {
         } else if (combined.contains("nacosconnectionfailureexception")
                 || combined.contains("failed to connect to server")
                 || (combined.contains("connection refused") && (combined.contains("8848") || combined.contains("nacos")))) {
-            title = "启动失败：Nacos 配置中心 / 注册中心连接不上";
+            title = "启动失败：Nacos 配置中心连接不上";
             body  = String.join("\n",
-                    "  1) 确认 Nacos Server 是否启动：端口 8848（默认地址 127.0.0.1:8848）",
+                    "  1) 确认 Nacos Server 是否启动：端口 8848（默认地址 192.168.3.100:8848）",
                     "  2) 如果使用 Docker，请执行（standalone 单机模式）：",
                     "       docker run -d --name fatjar-nacos -p 8848:8848 -p 9848:9848 \\",
-                    "         -e MODE=standalone -e TZ=Asia/Shanghai nacos/nacos-server:v2.3.2",
+                    "         -e MODE=standalone -e TZ=Asia/Shanghai nacos/nacos-server:v2.2.3",
                     "  3) 浏览器打开 http://localhost:8848/nacos（nacos/nacos）检查 Namespace 和配置是否存在",
-                    "  4) 如果完全不想用 Nacos，从 startup/pom.xml 移除 nacos-config-spring-boot-starter，",
-                    "     并把所有配置写到 application-dev.yml / application.yml 中即可（不推荐生产环境这样做）");
+                    "  4) 当前使用 spring-cloud-starter-alibaba-nacos-config，配置前缀为 spring.cloud.nacos.config.*",
+                    "  5) application.yml 中 import 条目带 optional: 前缀，Nacos 不可用时自动回退到本地 application-{env}.yml");
         } else if (combined.contains("mqclientexception")
                 || combined.contains("no route info of this topic")
                 || combined.contains("nameserver is null")
