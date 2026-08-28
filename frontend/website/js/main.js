@@ -117,6 +117,6 @@ document.addEventListener('DOMContentLoaded', function () {
         'background:#1677ff;color:#fff;padding:4px 8px;border-radius:4px 0 0 4px;',
         'background:#0958d9;color:#fff;padding:4px 8px;border-radius:0 4px 4px 0;'
     );
-    console.log('后端 API 文档：http://localhost:8080/doc.html');
-    console.log('管理后台：http://localhost:5173');
+    console.log('后端 API 文档：/api/doc.html');
+    console.log('管理后台：/');
 });

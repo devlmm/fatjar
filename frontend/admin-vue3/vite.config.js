@@ -5,7 +5,7 @@
       1. 启用 Vue3 SFC 编译支持（@vitejs/plugin-vue）
       2. Element Plus 按需自动导入（unplugin-auto-import + unplugin-vue-components）
       3. 开发服务器：端口 5173，自动打开浏览器
-      4. 代理 /api -> http://localhost:8080，解决跨域
+      4. DEV 代理 /api -> http://localhost:8080（SIT/PRD 由 Nginx 反向代理，无需 vite proxy）
       5. 路径别名 @ -> /src，简化 import
     ==================================================================================== */
 

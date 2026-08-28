@@ -2,7 +2,7 @@
     fatjar 管理后台 - Axios 封装 src/utils/request.js
     ------------------------------------------------------------------------------------
     功能：
-      1. baseURL：/api（由 vite proxy 转发到 http://localhost:8080）
+      1. baseURL：/api（DEV 走 vite proxy，SIT/PRD 走 Nginx 反向代理）
       2. 请求拦截器：自动携带 Authorization 头
       3. 响应拦截器：
          - HTTP 状态码非 2xx：抛错 + ElMessage 提示
@@ -20,7 +20,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 // ---------- 创建 axios 实例 ----------
 const request = axios.create({
-  // 基址：开发环境通过 vite proxy 转发到 http://localhost:8080
+  // 基址：/api（DEV 走 vite proxy，SIT/PRD 走 Nginx 反向代理到后端）
   baseURL: '/api',
   // 请求超时：10 秒
   timeout: 10000,
